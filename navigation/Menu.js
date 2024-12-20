@@ -1,9 +1,9 @@
 import { Block, Text, theme } from "galio-framework";
 import { Image, ScrollView, StyleSheet } from "react-native";
-
 import { DrawerItem as DrawerCustomItem } from "../components";
 import Images from "../constants/Images";
 import React from "react";
+import tw from "twrnc";
 
 function CustomDrawerContent({
   drawerPosition,
@@ -13,14 +13,17 @@ function CustomDrawerContent({
   state,
   ...rest
 }) {
-  const screens = ["Home", "Profile", "Account", "Elements", "Articles"];
+  const screens = ["Home", "Profile"];
   return (
     <Block
       style={styles.container}
       forceInset={{ top: "always", horizontal: "never" }}
     >
       <Block flex={0.06} style={styles.header}>
-        <Image styles={styles.logo} source={Images.Logo} />
+        <Text style={tw`text-red-400 italic tracking-widest	font-bold`}>
+          Rapid Rescue
+        </Text>
+        {/* <Image styles={styles.logo} source={Images.Logo} /> */}
       </Block>
       <Block flex style={{ paddingLeft: 8, paddingRight: 14 }}>
         <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
@@ -34,7 +37,7 @@ function CustomDrawerContent({
               />
             );
           })}
-          <Block
+          {/* <Block
             flex
             style={{ marginTop: 24, marginVertical: 8, paddingHorizontal: 8 }}
           >
@@ -48,8 +51,8 @@ function CustomDrawerContent({
             <Text color="#8898AA" style={{ marginTop: 16, marginLeft: 8 }}>
               DOCUMENTATION
             </Text>
-          </Block>
-          <DrawerCustomItem title="Getting Started" navigation={navigation} />
+          </Block> 
+          <DrawerCustomItem title="Getting Started" navigation={navigation} />*/}
         </ScrollView>
       </Block>
     </Block>
