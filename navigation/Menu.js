@@ -13,7 +13,7 @@ function CustomDrawerContent({
   state,
   ...rest
 }) {
-  const screens = ["Home", "Profile", "Account", "Elements", "Articles"];
+  const screens = ["Home", "Profile"];
   return (
     <Block
       style={styles.container}
@@ -34,7 +34,7 @@ function CustomDrawerContent({
               />
             );
           })}
-          <Block
+          {/* <Block
             flex
             style={{ marginTop: 24, marginVertical: 8, paddingHorizontal: 8 }}
           >
@@ -48,8 +48,8 @@ function CustomDrawerContent({
             <Text color="#8898AA" style={{ marginTop: 16, marginLeft: 8 }}>
               DOCUMENTATION
             </Text>
-          </Block>
-          <DrawerCustomItem title="Getting Started" navigation={navigation} />
+          </Block> 
+          <DrawerCustomItem title="Getting Started" navigation={navigation} />*/}
         </ScrollView>
       </Block>
     </Block>
