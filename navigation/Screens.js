@@ -203,13 +203,13 @@ export default function OnboardingStack(props) {
         headerShown: false,
       }}
     >
-      <Stack.Screen
+      {/* <Stack.Screen
         name="Onboarding"
         component={Onboarding}
         option={{
           headerTransparent: true,
         }}
-      />
+      /> */}
       <Stack.Screen name="App" component={AppStack} />
     </Stack.Navigator>
   );
