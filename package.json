@@ -5,8 +5,8 @@
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "eject": "expo eject"
   },
   "repository": {
@@ -20,10 +20,12 @@
     "@react-navigation/drawer": "6.4.1",
     "@react-navigation/native": "^6.0.10",
     "@react-navigation/stack": "^6.2.1",
+    "@rnmapbox/maps": "^10.1.33",
     "@use-expo/font": "^2.0.0",
     "expo": "^52.0.0",
     "expo-app-loading": "~2.0.0",
     "expo-asset": "~11.0.1",
+    "expo-dev-client": "~5.0.6",
     "expo-font": "~13.0.1",
     "expo-modules-core": "~2.1.1",
     "expo-splash-screen": "^0.29.18",
