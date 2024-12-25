@@ -22,8 +22,26 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.argonfreereactnative"
     },
-    "description": "Argon React Native, based on Argon Design System. Coded by Creative Tim"
+    "plugins": [
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsVersion": "10.1.33",
+          "RNMapboxMapsDownloadToken": "sk.eyJ1IjoidGVqYXNjb2RlNDciLCJhIjoiY200eDAxYWg0MGRkYjJpczh3bGxjNWNlZiJ9.NpkF0o8U_yLwo8oXeG7xFw"
+        }
+      ]
+    ],
+    "description": "Argon React Native, based on Argon Design System. Coded by Creative Tim",
+    "android": {
+      "package": "com.anonymous.argonfreereactnative"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "fe193360-417d-440e-a1f9-5d090db826c0"
+      }
+    }
   }
 }
