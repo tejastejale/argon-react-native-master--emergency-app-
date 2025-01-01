@@ -19,8 +19,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createStackNavigator } from "@react-navigation/stack";
 import MainScreen from "../screens/Login/Main";
-import FirstLoginOption from "../screens/Login/Login";
-import SecondLoginOption from "../screens/Login/Register";
+import UserLogin from "../screens/Login/Login";
+import DriverLogin from "../screens/Login/Register";
 
 const { width } = Dimensions.get("screen");
 
@@ -207,8 +207,8 @@ function LoginStack() {
       }}
     >
       <Stack.Screen name="MainScreen" component={MainScreen} />
-      <Stack.Screen name="UserLogin" component={FirstLoginOption} />
-      <Stack.Screen name="DriverLogin" component={SecondLoginOption} />
+      <Stack.Screen name="UserLogin" component={UserLogin} />
+      <Stack.Screen name="DriverLogin" component={DriverLogin} />
     </Stack.Navigator>
   );
 }

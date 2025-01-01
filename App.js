@@ -38,7 +38,6 @@ function cacheImages(images) {
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
-
   useEffect(() => {
     async function prepare() {
       try {
@@ -46,7 +45,7 @@ export default function App() {
         await _loadResourcesAsync();
         // Pre-load fonts, make any API calls you need to do here
         await Font.loadAsync({
-          ArgonExtra: require("./assets/font/argon.ttf"),
+          ArgonExtra: require("./assets/font/Nunito.ttf"),
         });
       } catch (e) {
         console.warn(e);
