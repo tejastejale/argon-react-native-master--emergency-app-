@@ -207,8 +207,8 @@ function LoginStack() {
       }}
     >
       <Stack.Screen name="MainScreen" component={MainScreen} />
-      <Stack.Screen name="FirstLoginOption" component={FirstLoginOption} />
-      <Stack.Screen name="SecondLoginOption" component={SecondLoginOption} />
+      <Stack.Screen name="UserLogin" component={FirstLoginOption} />
+      <Stack.Screen name="DriverLogin" component={SecondLoginOption} />
     </Stack.Navigator>
   );
 }
