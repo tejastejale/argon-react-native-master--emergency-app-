@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { use, useEffect } from "react";
 import { StyleSheet, Dimensions, Image, View } from "react-native";
 import { Block, theme } from "galio-framework";
 import Mapbox, { Camera, MapView, PointAnnotation } from "@rnmapbox/maps";
@@ -7,6 +7,7 @@ import * as Location from "expo-location";
 import tw from "twrnc";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import marker from "../assets/imgs/location-marker.png";
+import { locationData } from "../constants/contantFunctions/contants";
 
 const { width } = Dimensions.get("screen");
 
@@ -16,23 +17,18 @@ Mapbox.setAccessToken(
 
 const Home = () => {
   const [locData, setLocData] = React.useState(null);
-  const [loc, setLoc] = React.useState([73.776171, 19.996917]);
+  const [loc, setLoc] = React.useState(null);
 
   useEffect(() => {
     requestPermission();
-    locationData();
   }, []);
 
-  const url = (lat, long) => {
-    let url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${long}&lon=${lat}`;
-    return url;
-  };
-
-  const locationData = () => {
-    fetch(url(73.776171, 19.996917))
-      .then((res) => res.json())
-      .then((data) => setLocData(data));
-  };
+  useEffect(() => {
+    if (loc) {
+      let temp = locationData(loc);
+      setLocData(temp);
+    }
+  }, [loc]);
 
   const requestPermission = async () => {
     try {
@@ -56,28 +52,30 @@ const Home = () => {
 
   return (
     <Block flex center style={styles.home}>
-      <MapView
-        style={tw`h-full w-full`}
-        styleURL="mapbox://styles/mapbox/outdoors-v12"
-        zoomEnabled={true}
-        rotateEnabled={true}
-      >
-        <Camera
-          zoomLevel={15}
-          centerCoordinate={loc}
-          animationMode="flyTo"
-          animationDuration={3000}
-          pitch={30}
-        />
-        <PointAnnotation id="marker" coordinate={loc}>
-          <View>
-            <Image
-              style={styles.marker}
-              source={require("../assets/imgs/location-marker.png")}
-            />
-          </View>
-        </PointAnnotation>
-      </MapView>
+      {loc && locData ? (
+        <MapView
+          style={tw`h-full w-full`}
+          styleURL="mapbox://styles/mapbox/outdoors-v12"
+          zoomEnabled={true}
+          rotateEnabled={true}
+        >
+          <Camera
+            centerCoordinate={loc}
+            zoomLevel={15}
+            animationMode="none"
+            animationDuration={3000}
+            pitch={30}
+          />
+          <PointAnnotation
+            // onSelected={(e) => console.log(e)} // display the location data of point annotation
+            id="marker"
+            style={styles.marker}
+            coordinate={loc}
+          >
+            <View></View>
+          </PointAnnotation>
+        </MapView>
+      ) : null}
     </Block>
   );
 };
@@ -87,9 +85,9 @@ const styles = StyleSheet.create({
     width: width,
   },
   marker: {
-    height: 30,
-    width: 30,
-    resizeMode: "contain",
+    height: 40,
+    width: 40,
+    resizeMode: "stretch",
   },
 });
 
