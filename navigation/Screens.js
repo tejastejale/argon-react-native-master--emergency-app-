@@ -242,6 +242,9 @@ function AppStack(props) {
         backgroundColor: "white",
         width: width * 0.8,
       }}
+      screenOptions={({ route }) => ({
+        swipeEnabled: !["Login", "MainScreen", "Register"].includes(route.name), // Disable swipe gesture for these screens
+      })}
       drawerContentOptions={{
         activeTintcolor: "white",
         inactiveTintColor: "#000",

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Image } from "react-native";
+import { Image, StatusBar } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import * as Font from "expo-font";
 import { Asset } from "expo-asset";
@@ -76,6 +76,7 @@ export default function App() {
       <GalioProvider theme={argonTheme}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <Block flex>
+            <StatusBar barStyle="dark-content" />
             <Screens />
           </Block>
         </GestureHandlerRootView>
