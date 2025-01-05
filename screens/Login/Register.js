@@ -1,13 +1,32 @@
+import React, { useState } from "react";
+import {
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  Image,
+} from "react-native";
 import { Button } from "galio-framework";
-import React, { useEffect, useRef } from "react";
-import { Text, Image, Animated, View, Dimensions } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import tw from "twrnc";
+import ArInput from "../../components/Input";
 
 const { width } = Dimensions.get("window");
 
-export default function DriverLogin({ navigation }) {
-  const animatedValue = useRef(new Animated.Value(-500)).current; // Start position off-screen to the left
+export default function RegistrationScreen({ navigation }) {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phoneNumber: "",
+    organizationName: "",
+    license: null,
+    passportPhoto: null,
+    carPhoto: null,
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [errors, setErrors] = useState({});
 
   const carouselData = [
     {
@@ -30,20 +49,38 @@ export default function DriverLogin({ navigation }) {
     },
   ];
 
-  useEffect(() => {
-    setTimeout(() => {
-      Animated.spring(animatedValue, {
-        toValue: 0, // Move to the position
-        friction: 6, // Spring friction
-        tension: 50, // Spring tension
-        useNativeDriver: true, // For smooth performance
-      }).start();
-    }, 400);
-  }, [animatedValue]);
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.fullName) newErrors.fullName = "Full Name is required.";
+    if (!formData.phoneNumber || !/^\d{10}$/.test(formData.phoneNumber))
+      newErrors.phoneNumber = "A valid 10-digit Phone Number is required.";
+    if (!formData.license) newErrors.license = "License is required.";
+    if (!formData.passportPhoto)
+      newErrors.passportPhoto = "Passport Photo is required.";
+    if (!formData.carPhoto) newErrors.carPhoto = "Car Photo is required.";
+    if (!formData.password || formData.password.length < 6)
+      newErrors.password = "Password must be at least 6 characters.";
+    if (formData.password !== formData.confirmPassword)
+      newErrors.confirmPassword = "Passwords do not match.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleFormSubmit = () => {
+    if (validateForm()) {
+      console.log("Form Submitted", formData);
+      // Add your registration logic here
+    }
+  };
+
+  const handleFileUpload = (field) => {
+    // Implement file upload functionality here
+    console.log(`Uploading file for ${field}`);
+  };
 
   return (
-    <View style={tw`h-full w-full bg-white`}>
-      {/* Carousel Section */}
+    <ScrollView style={tw`h-full w-full bg-white`}>
       <View style={tw`h-[30%] w-full`}>
         <Carousel
           loop
@@ -59,54 +96,150 @@ export default function DriverLogin({ navigation }) {
                 style={tw`h-full w-full rounded-lg`}
                 resizeMode="contain"
               />
-              {/* <Text style={tw`text-xl font-bold mt-4`}>{item.title}</Text>
-              <Text style={tw`text-sm text-gray-600`}>{item.description}</Text> */}
             </View>
           )}
         />
       </View>
 
-      {/* Bottom Content Section */}
-      <View
-        style={tw`bg-gray-200 w-full h-[70%] rounded-t-[50px] p-10 flex flex-col justify-between elevation-20`}
+      {/* Registration Form Section */}
+      <ScrollView
+        contentContainerStyle={tw`pb-20`} // Added padding to the bottom
+        style={tw`bg-gray-200 -mt-20 w-full h-full rounded-t-[50px] p-10 flex flex-col elevation-20`}
       >
-        <View>
-          <View style={tw`flex flex-row gap-2`}>
-            <Text style={tw`font-semibold italic text-2xl mb-2`}>
-              Welcome to
-            </Text>
-            <Animated.Text
-              style={[
-                tw`text-orange-500 text-2xl italic font-semibold`,
-                {
-                  transform: [{ translateX: animatedValue }],
-                },
-              ]}
-            >
-              Rapid Rescue
-            </Animated.Text>
-          </View>
-          <Text style={tw`font-normal italic text-md`}>
-            We provide solutions to fulfill your emergency needs with just one
-            click !!!
-          </Text>
+        <Text
+          style={tw`text-2xl font-semibold text-orange-500 text-center mb-5`}
+        >
+          Register
+        </Text>
+        <View style={tw`mb-1`}>
+          <Text style={tw`mb-0`}>Full Name *</Text>
+          <ArInput
+            style={tw`border p-2 rounded-lg`}
+            placeholder="Enter Full Name"
+            value={formData.fullName}
+            onChangeText={(text) =>
+              setFormData({ ...formData, fullName: text })
+            }
+          />
+          {errors.fullName && (
+            <Text style={tw`text-red-500`}>{errors.fullName}</Text>
+          )}
         </View>
 
-        <View style={tw`w-full `}>
-          <Button
-            style={tw`w-full elevation-10`}
-            onPress={() => navigation.navigate("UserLogin")}
-          >
-            Continue as User
-          </Button>
-          <Button
-            style={tw`w-full elevation-10`}
-            onPress={() => navigation.navigate("DriverLogin")}
-          >
-            Continue as Driver
-          </Button>
+        <View style={tw`mb-1`}>
+          <Text style={tw`mb-0`}>Phone Number *</Text>
+          <ArInput
+            style={tw`border p-2 rounded-lg`}
+            placeholder="Enter Phone Number"
+            keyboardType="numeric"
+            value={formData.phoneNumber}
+            onChangeText={(text) =>
+              setFormData({ ...formData, phoneNumber: text })
+            }
+          />
+          {errors.phoneNumber && (
+            <Text style={tw`text-red-500`}>{errors.phoneNumber}</Text>
+          )}
         </View>
-      </View>
-    </View>
+
+        <View style={tw`mb-1`}>
+          <Text style={tw`mb-0`}>Organization Name</Text>
+          <ArInput
+            style={tw`border p-2 rounded-lg`}
+            placeholder="Enter Organization Name"
+            value={formData.organizationName}
+            onChangeText={(text) =>
+              setFormData({ ...formData, organizationName: text })
+            }
+          />
+        </View>
+
+        <View style={tw`mb-3`}>
+          <Text style={tw`mb-2`}>License *</Text>
+          <TouchableOpacity
+            style={tw`p-3 px-2 rounded-lg bg-white`}
+            onPress={() => handleFileUpload("license")}
+          >
+            <Text style={tw`text-gray-400`}>
+              {formData.license ? "File Selected" : "Upload License"}
+            </Text>
+          </TouchableOpacity>
+          {errors.license && (
+            <Text style={tw`text-red-500`}>{errors.license}</Text>
+          )}
+        </View>
+
+        <View style={tw`mb-3`}>
+          <Text style={tw`mb-2`}>Passport Photo *</Text>
+          <TouchableOpacity
+            style={tw`p-3 px-2 rounded-lg bg-white`}
+            onPress={() => handleFileUpload("passportPhoto")}
+          >
+            <Text style={tw`text-gray-400`}>
+              {formData.passportPhoto
+                ? "File Selected"
+                : "Upload Passport Photo"}
+            </Text>
+          </TouchableOpacity>
+          {errors.passportPhoto && (
+            <Text style={tw`text-red-500`}>{errors.passportPhoto}</Text>
+          )}
+        </View>
+
+        <View style={tw`mb-3`}>
+          <Text style={tw`mb-2`}>Car Photo *</Text>
+          <TouchableOpacity
+            style={tw`p-3 px-2 rounded-lg bg-white`}
+            onPress={() => handleFileUpload("carPhoto")}
+          >
+            <Text style={tw`text-gray-400`}>
+              {formData.carPhoto ? "File Selected" : "Upload Car Photo"}
+            </Text>
+          </TouchableOpacity>
+          {errors.carPhoto && (
+            <Text style={tw`text-red-500`}>{errors.carPhoto}</Text>
+          )}
+        </View>
+
+        <View style={tw`mb-1`}>
+          <Text style={tw`mb-0`}>Password *</Text>
+          <ArInput
+            style={tw`border p-2 rounded-lg`}
+            placeholder="Enter Password"
+            secureTextEntry
+            value={formData.password}
+            onChangeText={(text) =>
+              setFormData({ ...formData, password: text })
+            }
+          />
+          {errors.password && (
+            <Text style={tw`text-red-500`}>{errors.password}</Text>
+          )}
+        </View>
+
+        <View style={tw`mb-3`}>
+          <Text style={tw`mb-0`}>Confirm Password *</Text>
+          <ArInput
+            style={tw`border p-2 rounded-lg`}
+            placeholder="Confirm Password"
+            secureTextEntry
+            value={formData.confirmPassword}
+            onChangeText={(text) =>
+              setFormData({ ...formData, confirmPassword: text })
+            }
+          />
+          {errors.confirmPassword && (
+            <Text style={tw`text-red-500`}>{errors.confirmPassword}</Text>
+          )}
+        </View>
+
+        <Button
+          style={tw`w-full elevation-10 m-0 mb-00`}
+          onPress={handleFormSubmit}
+        >
+          Register
+        </Button>
+      </ScrollView>
+    </ScrollView>
   );
 }
