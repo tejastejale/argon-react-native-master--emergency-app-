@@ -40,18 +40,17 @@ export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
   useEffect(() => {
     async function prepare() {
+      let success = false;
       try {
-        //Load Resources
         await _loadResourcesAsync();
-        // Pre-load fonts, make any API calls you need to do here
         await Font.loadAsync({
           ArgonExtra: require("./assets/font/Nunito.ttf"),
         });
+        success = true;
       } catch (e) {
-        console.warn(e);
+        console.warn("Error loading resources:", e);
       } finally {
-        // Tell the application to render
-        setAppIsReady(true);
+        if (success) setAppIsReady(true);
       }
     }
     prepare();
