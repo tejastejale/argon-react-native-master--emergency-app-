@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import { Text, Image, Animated, View, Dimensions } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import tw from "twrnc";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 
@@ -44,11 +45,10 @@ export default function MainScreen({ navigation }) {
   return (
     <View style={tw`h-full w-full bg-white`}>
       {/* Carousel Section */}
-      <View style={tw`h-[30%] w-full`}>
+      <View style={tw`h-[50%] w-full`}>
         <Carousel
           loop
           width={width}
-          height={250}
           autoPlay={true}
           autoPlayInterval={3000}
           data={carouselData}
@@ -67,8 +67,9 @@ export default function MainScreen({ navigation }) {
       </View>
 
       {/* Bottom Content Section */}
-      <View
-        style={tw`bg-gray-200 w-full h-[70%] rounded-t-[50px] p-10 flex flex-col justify-between elevation-20`}
+      <LinearGradient
+        colors={["#e5e7eb", "#FFFFFF"]}
+        style={tw` w-full h-[50%] rounded-t-[50px] p-10 flex flex-col justify-between elevation-20`}
       >
         <View>
           <View style={tw`flex flex-row gap-2`}>
@@ -77,7 +78,7 @@ export default function MainScreen({ navigation }) {
             </Text>
             <Animated.Text
               style={[
-                tw`text-orange-500 text-2xl italic font-semibold`,
+                tw`text-violet-600 text-2xl italic font-semibold`,
                 {
                   transform: [{ translateX: animatedValue }],
                 },
@@ -94,19 +95,19 @@ export default function MainScreen({ navigation }) {
 
         <View style={tw`w-full `}>
           <Button
-            style={tw`w-full elevation-10`}
+            style={tw`w-full bg-violet-600 rounded-2xl elevation-10`}
             onPress={() => navigation.navigate("UserLogin")}
           >
             Continue as User
           </Button>
           <Button
-            style={tw`w-full elevation-10`}
+            style={tw`w-full bg-violet-600 rounded-2xl elevation-10`}
             onPress={() => navigation.navigate("DriverLogin")}
           >
             Continue as Driver
           </Button>
         </View>
-      </View>
+      </LinearGradient>
     </View>
   );
 }

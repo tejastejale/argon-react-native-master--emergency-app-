@@ -4,22 +4,30 @@ import { Text, Image, Animated, View, Dimensions } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import tw from "twrnc";
 import ArInput from "../../components/Input";
-import ArButton from "../../components/Button";
 import { useIsFocused } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 
 export default function UserLogin({ navigation }) {
   const isFocused = useIsFocused();
   const [InputData, setInputData] = useState({
-    name: "",
+    first_name: "",
+    last_name: "",
     phone: "",
-    nameError: "",
+    email: "",
+    password: "",
+    confirm_password: "",
+    firstNameError: "",
+    lastNameError: "",
     phoneError: "",
+    emailError: "",
+    passwordError: "",
+    confirmPasswordError: "",
     isValid: false, // Initially invalid
   });
 
-  const animatedValue = new Animated.Value(-500); // Direct use of Animated value
+  const animatedValue = new Animated.Value(-500);
 
   const carouselData = [
     {
@@ -42,69 +50,66 @@ export default function UserLogin({ navigation }) {
     },
   ];
 
-  // Animation effect on screen load
   useEffect(() => {
     Animated.spring(animatedValue, {
-      toValue: 0, // Move to the position
-      friction: 6, // Spring friction
-      tension: 50, // Spring tension
-      useNativeDriver: true, // For smooth performance
+      toValue: 0,
+      friction: 6,
+      tension: 50,
+      useNativeDriver: true,
     }).start();
   }, []);
 
   const handleChange = (name, value) => {
-    setInputData({ ...InputData, [name]: value }, () => {
-      // Re-run validation after state update
-      validateFields();
-    });
+    setInputData({ ...InputData, [name]: value }, validateFields);
   };
 
   const validateFields = () => {
-    let errors = {}; // To hold error messages
+    let errors = {};
 
-    // Check if name is empty first
-    if (InputData.name.trim().length === 0) {
-      errors.nameError = "Name is required";
-    } else {
-      // Check if name has at least 3 words
-      const nameSpaces = InputData.name.trim().split(/\s+/).length;
-      if (nameSpaces < 3) {
-        errors.nameError = "Enter a valid name with at least 3 words";
-      }
+    // First Name validation
+    if (InputData.first_name.trim().length === 0) {
+      errors.firstNameError = "First name is required";
     }
 
-    // Validate phone number (should be 10 digits)
+    // Last Name validation
+    if (InputData.last_name.trim().length === 0) {
+      errors.lastNameError = "Last name is required";
+    }
+
+    // Phone validation
     if (InputData.phone.length !== 10) {
       errors.phoneError = "Enter a valid Phone Number";
     }
 
-    // If no errors, clear errors and set validity to true
-    const isValid = Object.keys(errors).length === 0;
-
-    // If there are no errors, clear the error messages
-    if (isValid) {
-      errors.nameError = "";
-      errors.phoneError = "";
+    // Email validation
+    if (!/\S+@\S+\.\S+/.test(InputData.email)) {
+      errors.emailError = "Enter a valid email address";
     }
 
-    // Update state with errors and validity flag
-    setInputData({
-      ...InputData,
-      ...errors, // Merge errors into the state
-      isValid, // Update validity
-    });
+    // Password validation
+    if (InputData.password.length < 6) {
+      errors.passwordError = "Password must be at least 6 characters long";
+    }
+
+    // Confirm password validation
+    if (InputData.confirm_password !== InputData.password) {
+      errors.confirmPasswordError = "Passwords do not match";
+    }
+
+    // Check validity
+    const isValid = Object.keys(errors).length === 0;
+    setInputData({ ...InputData, ...errors, isValid });
   };
 
   return (
     <>
       {isFocused && (
         <View style={tw`h-full w-full bg-white`}>
-          {/* Carousel Section */}
-          <View style={tw`h-[30%] w-full`}>
+          <View style={tw`h-[20%] w-full`}>
+            {/* Carousel Section */}
             <Carousel
               loop
               width={width}
-              height={250}
               autoPlay={true}
               autoPlayInterval={3000}
               data={carouselData}
@@ -120,39 +125,52 @@ export default function UserLogin({ navigation }) {
             />
           </View>
 
-          {/* Bottom Content Section */}
-          <View
-            style={tw`bg-gray-200 w-full h-[70%] rounded-t-[50px] p-10 flex flex-col justify-between elevation-20`}
+          <LinearGradient
+            colors={["#e5e7eb", "#FFFFFF"]}
+            style={tw`flex flex-col h-[80%] justify-evenly bg-gray-200 w-full rounded-t-[50px] p-10 elevation-20`}
           >
+            <View style={tw`flex flex-row gap-2`}>
+              <Text style={tw`font-semibold italic text-2xl mb-2`}>
+                Welcome to
+              </Text>
+              <Animated.Text
+                style={[
+                  tw`text-violet-600 text-2xl italic font-semibold`,
+                  {
+                    transform: [{ translateX: animatedValue }],
+                  },
+                ]}
+              >
+                Rapid Rescue
+              </Animated.Text>
+            </View>
             <View>
-              <View style={tw`flex flex-row gap-2`}>
-                <Text style={tw`font-semibold italic text-2xl mb-2`}>
-                  Welcome to
-                </Text>
-                <Animated.Text
-                  style={[
-                    tw`text-orange-500 text-2xl italic font-semibold`,
-                    {
-                      transform: [{ translateX: animatedValue }],
-                    },
-                  ]}
-                >
-                  Rapid Rescue
-                </Animated.Text>
-              </View>
               <ArInput
-                onBlur={() => validateFields()}
-                onChangeText={(e) => handleChange("name", e)}
-                placeholder="Full Name *"
-                value={InputData.name}
+                onBlur={validateFields}
+                onChangeText={(e) => handleChange("first_name", e)}
+                placeholder="First Name *"
+                value={InputData.first_name}
               />
-              {InputData.nameError && (
+              {InputData.firstNameError && (
                 <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.nameError}
+                  {InputData.firstNameError}
                 </Text>
               )}
+
               <ArInput
-                onBlur={() => validateFields()}
+                onBlur={validateFields}
+                onChangeText={(e) => handleChange("last_name", e)}
+                placeholder="Last Name *"
+                value={InputData.last_name}
+              />
+              {InputData.lastNameError && (
+                <Text style={tw`text-red-500 italic text-sm mb-2`}>
+                  {InputData.lastNameError}
+                </Text>
+              )}
+
+              <ArInput
+                onBlur={validateFields}
                 maxLength={10}
                 keyboardType="numeric"
                 onChangeText={(e) => handleChange("phone", e)}
@@ -164,20 +182,57 @@ export default function UserLogin({ navigation }) {
                   {InputData.phoneError}
                 </Text>
               )}
+
+              <ArInput
+                onBlur={validateFields}
+                onChangeText={(e) => handleChange("email", e)}
+                placeholder="Email *"
+                value={InputData.email}
+              />
+              {InputData.emailError && (
+                <Text style={tw`text-red-500 italic text-sm mb-2`}>
+                  {InputData.emailError}
+                </Text>
+              )}
+
+              <ArInput
+                onBlur={validateFields}
+                onChangeText={(e) => handleChange("password", e)}
+                placeholder="Password *"
+                secureTextEntry
+                value={InputData.password}
+              />
+              {InputData.passwordError && (
+                <Text style={tw`text-red-500 italic text-sm mb-2`}>
+                  {InputData.passwordError}
+                </Text>
+              )}
+
+              <ArInput
+                onBlur={validateFields}
+                onChangeText={(e) => handleChange("confirm_password", e)}
+                placeholder="Confirm Password *"
+                secureTextEntry
+                value={InputData.confirm_password}
+              />
+              {InputData.confirmPasswordError && (
+                <Text style={tw`text-red-500 italic text-sm mb-2`}>
+                  {InputData.confirmPasswordError}
+                </Text>
+              )}
             </View>
 
             <View style={tw`w-full `}>
-              <ArButton
+              <Button
                 disabled={!InputData.isValid}
-                style={tw`w-full elevation-10 cursor-pointer ${
+                style={tw`w-full m-0 mt-2 bg-violet-600 rounded-2xl elevation-10 ${
                   !InputData.isValid ? "opacity-50" : ""
                 }`}
-                // onPress={() => navigation.navigate("UserHome")} // Update navigation as needed
               >
                 Continue
-              </ArButton>
+              </Button>
             </View>
-          </View>
+          </LinearGradient>
         </View>
       )}
     </>

@@ -13,6 +13,7 @@ import tw from "twrnc";
 import ArInput from "../../components/Input";
 import * as ImagePicker from "expo-image-picker";
 import { Icon } from "galio-framework";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 
@@ -137,12 +138,12 @@ export default function RegistrationScreen({ navigation }) {
       </View>
 
       {/* Registration Form Section */}
-      <ScrollView
-        contentContainerStyle={tw`pb-40`} // Added padding to the bottom
-        style={tw`bg-gray-200 -mt-40 w-full h-full rounded-t-[50px] p-10 flex flex-col elevation-20`}
+      <LinearGradient
+        colors={["#e5e7eb", "#FFFFFF"]}
+        style={tw`bg-gray-200 -mt-40 w-full h-full rounded-t-[50px] p-10 pb-24 flex flex-col elevation-20`}
       >
         <Text
-          style={tw`text-2xl font-semibold text-orange-500 text-center mb-5`}
+          style={tw`text-2xl font-semibold text-violet-600 text-center mb-5`}
         >
           Register
         </Text>
@@ -217,7 +218,7 @@ export default function RegistrationScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
           {errors.license && (
-            <Text style={tw`text-red-500`}>{errors.license}</Text>
+            <Text style={tw`text-red-500 mt-2`}>{errors.license}</Text>
           )}
         </View>
 
@@ -260,7 +261,7 @@ export default function RegistrationScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
           {errors.carPhoto && (
-            <Text style={tw`text-red-500`}>{errors.carPhoto}</Text>
+            <Text style={tw`text-red-500 mt-2`}>{errors.carPhoto}</Text>
           )}
         </View>
 
@@ -294,7 +295,7 @@ export default function RegistrationScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
           {errors.passportPhoto && (
-            <Text style={tw`text-red-500`}>{errors.passportPhoto}</Text>
+            <Text style={tw`text-red-500 mt-2`}>{errors.passportPhoto}</Text>
           )}
         </View>
 
@@ -331,12 +332,12 @@ export default function RegistrationScreen({ navigation }) {
         </View>
 
         <Button
-          style={tw`w-full elevation-10 m-0 mb-00`}
+          style={tw`w-full bg-violet-600 rounded-2xl elevation-10 m-0 mb-0`}
           onPress={handleFormSubmit}
         >
           Register
         </Button>
-      </ScrollView>
+      </LinearGradient>
     </ScrollView>
   );
 }
