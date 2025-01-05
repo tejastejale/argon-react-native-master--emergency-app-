@@ -11,6 +11,8 @@ import { Button } from "galio-framework";
 import Carousel from "react-native-reanimated-carousel";
 import tw from "twrnc";
 import ArInput from "../../components/Input";
+import * as ImagePicker from "expo-image-picker";
+import { Icon } from "galio-framework";
 
 const { width } = Dimensions.get("window");
 
@@ -21,7 +23,7 @@ export default function RegistrationScreen({ navigation }) {
     organizationName: "",
     license: null,
     passportPhoto: null,
-    carPhoto: null,
+    carPhoto: [],
     password: "",
     confirmPassword: "",
   });
@@ -57,7 +59,10 @@ export default function RegistrationScreen({ navigation }) {
     if (!formData.license) newErrors.license = "License is required.";
     if (!formData.passportPhoto)
       newErrors.passportPhoto = "Passport Photo is required.";
-    if (!formData.carPhoto) newErrors.carPhoto = "Car Photo is required.";
+    if (!formData.carPhoto) {
+      newErrors.carPhoto = "Car Photos are required.";
+    } else if (formData.carPhoto.length < 3)
+      newErrors.carPhoto = "Upload atleast 3 car photos.";
     if (!formData.password || formData.password.length < 6)
       newErrors.password = "Password must be at least 6 characters.";
     if (formData.password !== formData.confirmPassword)
@@ -69,15 +74,45 @@ export default function RegistrationScreen({ navigation }) {
 
   const handleFormSubmit = () => {
     if (validateForm()) {
-      console.log("Form Submitted", formData);
+      console.log("Form Submitted================================");
       // Add your registration logic here
     }
   };
 
-  const handleFileUpload = (field) => {
-    // Implement file upload functionality here
-    console.log(`Uploading file for ${field}`);
+  const handleFileUpload = async (field) => {
+    const per = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (per.status === "granted") {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        allowsMultipleSelection: field === "carPhoto" ? true : false, // Enable multiple selections
+        selectionLimit: field === "carPhoto" ? 6 : 1,
+        mediaTypes: ["images"],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        const imageUris = result.assets.map((asset) => asset.uri); // Extract URIs
+        saveImage(imageUris, field);
+      }
+    } else {
+      alert("You must upload all required documents.");
+    }
   };
+
+  const saveImage = (images, field) => {
+    if (field === "carPhoto") {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: prev[field] ? [...prev[field], ...images] : images, // Append or initialize the array
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: images[0] })); // Save single image for other fields
+    }
+  };
+
+  React.useEffect(() => {
+    console.log(formData);
+  }, [formData]);
 
   return (
     <ScrollView style={tw`h-full w-full bg-white`}>
@@ -103,8 +138,8 @@ export default function RegistrationScreen({ navigation }) {
 
       {/* Registration Form Section */}
       <ScrollView
-        contentContainerStyle={tw`pb-20`} // Added padding to the bottom
-        style={tw`bg-gray-200 -mt-20 w-full h-full rounded-t-[50px] p-10 flex flex-col elevation-20`}
+        contentContainerStyle={tw`pb-40`} // Added padding to the bottom
+        style={tw`bg-gray-200 -mt-40 w-full h-full rounded-t-[50px] p-10 flex flex-col elevation-20`}
       >
         <Text
           style={tw`text-2xl font-semibold text-orange-500 text-center mb-5`}
@@ -156,6 +191,23 @@ export default function RegistrationScreen({ navigation }) {
 
         <View style={tw`mb-3`}>
           <Text style={tw`mb-2`}>License *</Text>
+          {formData.license && (
+            <View style={tw`relative ml-2`}>
+              <Icon
+                family="Entypo"
+                size={15}
+                name="cross"
+                color={"black"}
+                style={tw`bg-gray-400 text-white rounded-full p-[1px] w-4 h-4 -mb-2 z-10 -ml-2`}
+                onPress={() => setFormData({ ...formData, license: null })}
+              />
+              <Image
+                src={formData.license}
+                alt="license"
+                style={tw`mb-2 bg-red-400 w-10 h-10 rounded-md`}
+              />
+            </View>
+          )}
           <TouchableOpacity
             style={tw`p-3 px-2 rounded-lg bg-white`}
             onPress={() => handleFileUpload("license")}
@@ -170,34 +222,79 @@ export default function RegistrationScreen({ navigation }) {
         </View>
 
         <View style={tw`mb-3`}>
-          <Text style={tw`mb-2`}>Passport Photo *</Text>
-          <TouchableOpacity
-            style={tw`p-3 px-2 rounded-lg bg-white`}
-            onPress={() => handleFileUpload("passportPhoto")}
-          >
-            <Text style={tw`text-gray-400`}>
-              {formData.passportPhoto
-                ? "File Selected"
-                : "Upload Passport Photo"}
-            </Text>
-          </TouchableOpacity>
-          {errors.passportPhoto && (
-            <Text style={tw`text-red-500`}>{errors.passportPhoto}</Text>
+          <Text style={tw`mb-1`}>Car Photos *</Text>
+          {formData.carPhoto && (
+            <ScrollView horizontal style={tw`mb-2`}>
+              {formData.carPhoto.map((uri, index) => (
+                <View key={index} style={tw`relative ml-2`}>
+                  <Icon
+                    family="Entypo"
+                    size={15}
+                    name="cross"
+                    color={"black"}
+                    style={tw`-mb-2 -ml-2 bg-gray-400 text-white rounded-full p-[1px] w-4 h-4 z-10`}
+                    onPress={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        carPhoto: prev.carPhoto.filter((_, i) => i !== index),
+                      }))
+                    }
+                  />
+                  <Image
+                    source={{ uri }}
+                    style={tw`w-10 h-10 rounded-lg mr-2 z-0`}
+                    resizeMode="cover"
+                  />
+                </View>
+              ))}
+            </ScrollView>
           )}
-        </View>
-
-        <View style={tw`mb-3`}>
-          <Text style={tw`mb-2`}>Car Photo *</Text>
           <TouchableOpacity
             style={tw`p-3 px-2 rounded-lg bg-white`}
             onPress={() => handleFileUpload("carPhoto")}
           >
             <Text style={tw`text-gray-400`}>
-              {formData.carPhoto ? "File Selected" : "Upload Car Photo"}
+              {formData.carPhoto?.length > 0
+                ? "Add More Photos"
+                : "Upload Car Photos"}
             </Text>
           </TouchableOpacity>
           {errors.carPhoto && (
             <Text style={tw`text-red-500`}>{errors.carPhoto}</Text>
+          )}
+        </View>
+
+        <View style={tw`mb-3`}>
+          <Text style={tw`mb-2`}>Your Photo *</Text>
+          {formData.passportPhoto && (
+            <View style={tw`relative ml-2 mb-2`}>
+              <Icon
+                family="Entypo"
+                size={15}
+                name="cross"
+                color={"black"}
+                style={tw`-mb-2 -ml-2 bg-gray-400 text-white rounded-full p-[1px] w-4 h-4 z-10`}
+                onPress={() =>
+                  setFormData({ ...formData, passportPhoto: null })
+                }
+              />
+              <Image
+                source={{ uri: formData.passportPhoto }}
+                style={tw`w-10 h-10 rounded-lg`}
+                resizeMode="cover"
+              />
+            </View>
+          )}
+          <TouchableOpacity
+            style={tw`p-3 px-2 rounded-lg bg-white`}
+            onPress={() => handleFileUpload("passportPhoto")}
+          >
+            <Text style={tw`text-gray-400`}>
+              {formData.passportPhoto ? "File Selected" : "Upload Your Photo"}
+            </Text>
+          </TouchableOpacity>
+          {errors.passportPhoto && (
+            <Text style={tw`text-red-500`}>{errors.passportPhoto}</Text>
           )}
         </View>
 
