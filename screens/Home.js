@@ -1,23 +1,30 @@
-import React, { use, useEffect } from "react";
-import { StyleSheet, Dimensions, Image, View } from "react-native";
-import { Block, theme } from "galio-framework";
+import React, { useEffect, useRef, useState } from "react";
+import { View, ActivityIndicator, Image } from "react-native";
+import { Block, Text } from "galio-framework";
 import Mapbox, { Camera, MapView, PointAnnotation } from "@rnmapbox/maps";
-import { requestAndroidLocationPermissions } from "@rnmapbox/maps";
+import ambulance from "../assets/imgs/Cars/ambulance.png";
+import fire from "../assets/imgs/Cars/fire.png";
+import police from "../assets/imgs/Cars/police.png";
 import * as Location from "expo-location";
 import tw from "twrnc";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import marker from "../assets/imgs/location-marker.png";
 import { locationData } from "../constants/contantFunctions/contants";
-
-const { width } = Dimensions.get("screen");
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { Dimensions } from "react-native";
+import { Icon } from "../components";
+const { height } = Dimensions.get("screen");
 
 Mapbox.setAccessToken(
   "pk.eyJ1IjoidGVqYXNjb2RlNDciLCJhIjoiY200d3pqMGh2MGtldzJwczgwMTZnbHc0dCJ9.KyxtwzKWPT9n1yDElo8HEQ"
 );
 
 const Home = () => {
-  const [locData, setLocData] = React.useState(null);
-  const [loc, setLoc] = React.useState(null);
+  const bottomSheetRef = useRef(null);
+  const [locData, setLocData] = useState(null);
+  const [loc, setLoc] = useState(null);
+  const [isMapLoading, setIsMapLoading] = useState(true);
+  const [sheetArrow, setSheetArrow] = useState(0);
+  // Bottom sheet snap points
+  const snapPoints = [150, height * 0.4];
 
   useEffect(() => {
     requestPermission();
@@ -32,10 +39,8 @@ const Home = () => {
 
   const requestPermission = async () => {
     try {
-      // Request permission to access location
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === "granted") {
-        // Get the current position
         const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.High,
         });
@@ -50,14 +55,30 @@ const Home = () => {
     }
   };
 
+  const handleMapLoad = () => {
+    setIsMapLoading(false);
+  };
+
   return (
-    <Block flex center style={styles.home}>
-      {loc && locData ? (
+    <Block flex center style={tw`w-full`}>
+      {isMapLoading && (
+        <View
+          style={tw`absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-white/80 z-10`}
+        >
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text style={tw`mt-2 text-base text-black`}>Loading map...</Text>
+        </View>
+      )}
+      {loc && locData && (
         <MapView
           style={tw`h-full w-full`}
           styleURL="mapbox://styles/mapbox/outdoors-v12"
-          zoomEnabled={true}
-          rotateEnabled={true}
+          zoomEnabled
+          rotateEnabled
+          onMapIdle={handleMapLoad}
+          onMapLoadingError={() =>
+            alert("Something went wrong while loading the map!")
+          }
         >
           <Camera
             centerCoordinate={loc}
@@ -66,29 +87,67 @@ const Home = () => {
             animationDuration={3000}
             pitch={30}
           />
-          <PointAnnotation
-            // onSelected={(e) => console.log(e)} // display the location data of point annotation
-            id="marker"
-            style={styles.marker}
-            coordinate={loc}
-          >
-            <View></View>
+          <PointAnnotation id="marker" style={tw`h-10 w-10`} coordinate={loc}>
+            <View />
           </PointAnnotation>
         </MapView>
-      ) : null}
+      )}
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        enablePanDownToClose={false}
+        onChange={(e) => setSheetArrow(e)}
+        backgroundStyle={tw`bg-gray-100 rounded-t-3xl`}
+        handleIndicatorStyle={tw`hidden`}
+        handleComponent={() => (
+          <View style={tw`items-center my-2`}>
+            <Icon
+              name={sheetArrow === 0 ? "chevron-up" : "chevron-down"}
+              size={30}
+              family="entypo"
+              style={tw`text-gray-500`}
+            />
+          </View>
+        )}
+      >
+        <BottomSheetView style={tw`h-full px-4`}>
+          <View
+            style={tw`bg-white p-3 py-1 rounded-lg mb-3 shadow-md flex flex-row items-center`}
+          >
+            <Image source={ambulance} style={tw`w-16 h-20 mr-5`} />
+            <View style={tw`flex`}>
+              <Text style={tw`text-lg font-bold`}>Ambulance</Text>
+              <Text style={tw`text-sm text-gray-500`}>
+                Notify nearest ambulances to react you
+              </Text>
+            </View>
+          </View>
+          <View
+            style={tw`bg-white p-3 rounded-lg mb-3 shadow-md flex flex-row items-center`}
+          >
+            <Image source={fire} style={tw`w-16 h-16 mr-5`} />
+            <View style={tw`flex`}>
+              <Text style={tw`text-lg font-bold`}>Fire Brigade</Text>
+              <Text style={tw`text-sm text-gray-500`}>
+                Notify nearest fire brigade to react you
+              </Text>
+            </View>
+          </View>
+          <View
+            style={tw`bg-white p-3 rounded-lg mb-3 shadow-md flex flex-row items-center`}
+          >
+            <Image source={police} style={tw`w-14 h-16 mr-5`} />
+            <View style={tw`flex`}>
+              <Text style={tw`text-lg font-bold`}>Police</Text>
+              <Text style={tw`text-sm text-gray-500`}>
+                Notify nearest police to react you
+              </Text>
+            </View>
+          </View>
+        </BottomSheetView>
+      </BottomSheet>
     </Block>
   );
 };
-
-const styles = StyleSheet.create({
-  home: {
-    width: width,
-  },
-  marker: {
-    height: 40,
-    width: 40,
-    resizeMode: "stretch",
-  },
-});
 
 export default Home;
