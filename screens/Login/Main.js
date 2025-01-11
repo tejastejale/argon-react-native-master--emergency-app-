@@ -9,6 +9,7 @@ const { width } = Dimensions.get("window");
 
 export default function MainScreen({ navigation }) {
   const animatedValue = useRef(new Animated.Value(-500)).current; // Start position off-screen to the left
+  const animatedValue2 = useRef(new Animated.Value(300)).current; // Start below the screen
 
   const carouselData = [
     {
@@ -33,6 +34,17 @@ export default function MainScreen({ navigation }) {
 
   useEffect(() => {
     setTimeout(() => {
+      Animated.spring(animatedValue2, {
+        toValue: 0, // Move to the top position
+        friction: 6, // Spring friction
+        tension: 50, // Spring tension
+        useNativeDriver: true, // For smooth performance
+      }).start();
+    }, 400);
+  }, [animatedValue2]);
+
+  useEffect(() => {
+    setTimeout(() => {
       Animated.spring(animatedValue, {
         toValue: 0, // Move to the position
         friction: 6, // Spring friction
@@ -45,7 +57,7 @@ export default function MainScreen({ navigation }) {
   return (
     <View style={tw`h-full w-full bg-white`}>
       {/* Carousel Section */}
-      <View style={tw`h-[50%] w-full`}>
+      <View style={tw`h-[40%] w-full`}>
         <Carousel
           loop
           width={width}
@@ -69,7 +81,7 @@ export default function MainScreen({ navigation }) {
       {/* Bottom Content Section */}
       <LinearGradient
         colors={["#e5e7eb", "#FFFFFF"]}
-        style={tw` w-full h-[50%] rounded-t-[50px] p-10 flex flex-col justify-between elevation-20`}
+        style={tw` w-full h-[60%] rounded-t-[50px] p-10 flex flex-col justify-between elevation-20`}
       >
         <View>
           <View style={tw`flex flex-row gap-2`}>
@@ -92,20 +104,44 @@ export default function MainScreen({ navigation }) {
             click !!!
           </Text>
         </View>
-
-        <View style={tw`w-full `}>
-          <Button
-            style={tw`w-full bg-violet-600 rounded-2xl elevation-10`}
-            onPress={() => navigation.navigate("UserLogin")}
-          >
-            Continue as User
-          </Button>
-          <Button
-            style={tw`w-full bg-violet-600 rounded-2xl elevation-10`}
-            onPress={() => navigation.navigate("DriverLogin")}
-          >
-            Continue as Driver
-          </Button>
+        <View>
+          <View>
+            <Button
+              style={tw`w-full bg-violet-600 rounded-2xl elevation-10 mx-0`}
+              onPress={() => navigation.navigate("UserLogin")}
+            >
+              Register as User
+            </Button>
+            <Button
+              style={tw`w-full bg-violet-600 rounded-2xl elevation-10 mx-0`}
+              onPress={() => navigation.navigate("DriverLogin")}
+            >
+              Register as Driver
+            </Button>
+          </View>
+          <View style={tw`w-full `}>
+            <View style={tw`flex flex-row justify-center items-center`}>
+              <View style={tw`w-1/2 bg-gray-300 h-[2px]`}></View>
+              <Text style={tw`px-2`}>or</Text>
+              <View style={tw`w-1/2 bg-gray-300 h-[2px]`}></View>
+            </View>
+            <View>
+              <Animated.View
+                style={[
+                  {
+                    transform: [{ translateY: animatedValue2 }],
+                  },
+                ]}
+              >
+                <Button
+                  style={tw`w-full bg-violet-600 rounded-2xl elevation-10 mx-0`}
+                  onPress={() => navigation.navigate("Login")}
+                >
+                  Make a Login
+                </Button>
+              </Animated.View>
+            </View>
+          </View>
         </View>
       </LinearGradient>
     </View>

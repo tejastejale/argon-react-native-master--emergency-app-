@@ -34,15 +34,15 @@ const Home = () => {
     try {
       // Request permission to access location
       const { status } = await Location.requestForegroundPermissionsAsync();
-
       if (status === "granted") {
         // Get the current position
         const location = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.High,
         });
         setLoc([location.coords.longitude, location.coords.latitude]);
+        return;
       } else {
-        alert("Location permission denied");
+        alert("Choose Precise while giving Location permission.");
       }
     } catch (error) {
       console.error("Error requesting permissions or getting location:", error);

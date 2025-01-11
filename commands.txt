@@ -1,0 +1,5 @@
+for development build:
+eas build --profile development --platform android 
+
+for final apk 
+eas build -p android --profile preview

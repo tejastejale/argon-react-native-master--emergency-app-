@@ -17,7 +17,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 
-export default function RegistrationScreen({ navigation }) {
+export default function DriverLogin({ navigation }) {
   const [formData, setFormData] = useState({
     fullName: "",
     phoneNumber: "",

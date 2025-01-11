@@ -1,33 +1,17 @@
 import { Button } from "galio-framework";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Text, Image, Animated, View, Dimensions } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import tw from "twrnc";
-import ArInput from "../../components/Input";
-import { useIsFocused } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
+import ArInput from "../../components/Input";
 
 const { width } = Dimensions.get("window");
 
-export default function UserLogin({ navigation }) {
-  const isFocused = useIsFocused();
-  const [InputData, setInputData] = useState({
-    first_name: "",
-    last_name: "",
-    phone: "",
-    email: "",
-    password: "",
-    confirm_password: "",
-    firstNameError: "",
-    lastNameError: "",
-    phoneError: "",
-    emailError: "",
-    passwordError: "",
-    confirmPasswordError: "",
-    isValid: false, // Initially invalid
-  });
-
-  const animatedValue = new Animated.Value(-500);
+export default function Login({ navigation }) {
+  const [formData, setFormData] = useState({ phone: "", password: "" });
+  const animatedValue = useRef(new Animated.Value(-500)).current; // Start position off-screen to the left
+  const animatedValue2 = useRef(new Animated.Value(300)).current; // Start below the screen
 
   const carouselData = [
     {
@@ -51,190 +35,94 @@ export default function UserLogin({ navigation }) {
   ];
 
   useEffect(() => {
-    Animated.spring(animatedValue, {
-      toValue: 0,
-      friction: 6,
-      tension: 50,
-      useNativeDriver: true,
-    }).start();
-  }, []);
+    setTimeout(() => {
+      Animated.spring(animatedValue2, {
+        toValue: 0, // Move to the top position
+        friction: 6, // Spring friction
+        tension: 50, // Spring tension
+        useNativeDriver: true, // For smooth performance
+      }).start();
+    }, 400);
+  }, [animatedValue2]);
 
-  const handleChange = (name, value) => {
-    setInputData({ ...InputData, [name]: value }, validateFields);
-  };
-
-  const validateFields = () => {
-    let errors = {};
-
-    // First Name validation
-    if (InputData.first_name.trim().length === 0) {
-      errors.firstNameError = "First name is required";
-    }
-
-    // Last Name validation
-    if (InputData.last_name.trim().length === 0) {
-      errors.lastNameError = "Last name is required";
-    }
-
-    // Phone validation
-    if (InputData.phone.length !== 10) {
-      errors.phoneError = "Enter a valid Phone Number";
-    }
-
-    // Email validation
-    if (!/\S+@\S+\.\S+/.test(InputData.email)) {
-      errors.emailError = "Enter a valid email address";
-    }
-
-    // Password validation
-    if (InputData.password.length < 6) {
-      errors.passwordError = "Password must be at least 6 characters long";
-    }
-
-    // Confirm password validation
-    if (InputData.confirm_password !== InputData.password) {
-      errors.confirmPasswordError = "Passwords do not match";
-    }
-
-    // Check validity
-    const isValid = Object.keys(errors).length === 0;
-    setInputData({ ...InputData, ...errors, isValid });
-  };
+  useEffect(() => {
+    setTimeout(() => {
+      Animated.spring(animatedValue, {
+        toValue: 0, // Move to the position
+        friction: 6, // Spring friction
+        tension: 50, // Spring tension
+        useNativeDriver: true, // For smooth performance
+      }).start();
+    }, 400);
+  }, [animatedValue]);
 
   return (
-    <>
-      {isFocused && (
-        <View style={tw`h-full w-full bg-white`}>
-          <View style={tw`h-[20%] w-full`}>
-            {/* Carousel Section */}
-            <Carousel
-              loop
-              width={width}
-              autoPlay={true}
-              autoPlayInterval={3000}
-              data={carouselData}
-              renderItem={({ item }) => (
-                <View style={tw`h-full w-full items-center justify-center`}>
-                  <Image
-                    source={item.image}
-                    style={tw`h-full w-full rounded-lg`}
-                    resizeMode="contain"
-                  />
-                </View>
-              )}
-            />
-          </View>
+    <View style={tw`h-full w-full bg-white`}>
+      {/* Carousel Section */}
+      <View style={tw`h-[40%] w-full`}>
+        <Carousel
+          loop
+          width={width}
+          autoPlay={true}
+          autoPlayInterval={3000}
+          data={carouselData}
+          renderItem={({ item }) => (
+            <View style={tw`h-full w-full items-center justify-center`}>
+              <Image
+                source={item.image}
+                style={tw`h-full w-full rounded-lg`}
+                resizeMode="contain"
+              />
+              {/* <Text style={tw`text-xl font-bold mt-4`}>{item.title}</Text>
+              <Text style={tw`text-sm text-gray-600`}>{item.description}</Text> */}
+            </View>
+          )}
+        />
+      </View>
 
-          <LinearGradient
-            colors={["#e5e7eb", "#FFFFFF"]}
-            style={tw`flex flex-col h-[80%] justify-evenly bg-gray-200 w-full rounded-t-[50px] p-10 elevation-20`}
-          >
-            <View style={tw`flex flex-row gap-2`}>
-              <Text style={tw`font-semibold italic text-2xl mb-2`}>
-                Welcome to
-              </Text>
-              <Animated.Text
+      {/* Bottom Content Section */}
+      <LinearGradient
+        colors={["#e5e7eb", "#FFFFFF"]}
+        style={tw` w-full h-[60%] rounded-t-[50px] p-10 flex flex-col justify-between elevation-20`}
+      >
+        <View>
+          <ArInput
+            style={tw`border p-2 rounded-lg`}
+            placeholder="Phone *"
+            keyboardType="numeric"
+            value={formData.phone}
+            onChangeText={(text) => setFormData({ ...formData, phone: text })}
+          />
+          <ArInput
+            style={tw`border p-2 rounded-lg`}
+            placeholder="Password *"
+            value={formData.password}
+            onChangeText={(text) =>
+              setFormData({ ...formData, password: text })
+            }
+          />
+        </View>
+        <View>
+          <View style={tw`w-full `}>
+            <View>
+              <Animated.View
                 style={[
-                  tw`text-violet-600 text-2xl italic font-semibold`,
                   {
-                    transform: [{ translateX: animatedValue }],
+                    transform: [{ translateY: animatedValue2 }],
                   },
                 ]}
               >
-                Rapid Rescue
-              </Animated.Text>
+                <Button
+                  style={tw`w-full bg-violet-600 rounded-2xl elevation-10 mx-0`}
+                  onPress={() => navigation.navigate("Home")}
+                >
+                  Make a Login
+                </Button>
+              </Animated.View>
             </View>
-            <View>
-              <ArInput
-                onBlur={validateFields}
-                onChangeText={(e) => handleChange("first_name", e)}
-                placeholder="First Name *"
-                value={InputData.first_name}
-              />
-              {InputData.firstNameError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.firstNameError}
-                </Text>
-              )}
-
-              <ArInput
-                onBlur={validateFields}
-                onChangeText={(e) => handleChange("last_name", e)}
-                placeholder="Last Name *"
-                value={InputData.last_name}
-              />
-              {InputData.lastNameError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.lastNameError}
-                </Text>
-              )}
-
-              <ArInput
-                onBlur={validateFields}
-                maxLength={10}
-                keyboardType="numeric"
-                onChangeText={(e) => handleChange("phone", e)}
-                placeholder="Phone Number *"
-                value={InputData.phone}
-              />
-              {InputData.phoneError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.phoneError}
-                </Text>
-              )}
-
-              <ArInput
-                onBlur={validateFields}
-                onChangeText={(e) => handleChange("email", e)}
-                placeholder="Email *"
-                value={InputData.email}
-              />
-              {InputData.emailError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.emailError}
-                </Text>
-              )}
-
-              <ArInput
-                onBlur={validateFields}
-                onChangeText={(e) => handleChange("password", e)}
-                placeholder="Password *"
-                secureTextEntry
-                value={InputData.password}
-              />
-              {InputData.passwordError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.passwordError}
-                </Text>
-              )}
-
-              <ArInput
-                onBlur={validateFields}
-                onChangeText={(e) => handleChange("confirm_password", e)}
-                placeholder="Confirm Password *"
-                secureTextEntry
-                value={InputData.confirm_password}
-              />
-              {InputData.confirmPasswordError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.confirmPasswordError}
-                </Text>
-              )}
-            </View>
-
-            <View style={tw`w-full `}>
-              <Button
-                disabled={!InputData.isValid}
-                style={tw`w-full m-0 mt-2 bg-violet-600 rounded-2xl elevation-10 ${
-                  !InputData.isValid ? "opacity-50" : ""
-                }`}
-              >
-                Continue
-              </Button>
-            </View>
-          </LinearGradient>
+          </View>
         </View>
-      )}
-    </>
+      </LinearGradient>
+    </View>
   );
 }
