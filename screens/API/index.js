@@ -10,7 +10,7 @@ const API = axios.create({
 API.interceptors.request.use(async (req) => {
   const token = await AsyncStorage.getItem("token");
   if (token) {
-    req.headers.token = JSON.parse(token).token;
+    req.headers.Authorization = `Token ${JSON.parse(token).token}`; // Add Token as the prefix
   }
   return req;
 });

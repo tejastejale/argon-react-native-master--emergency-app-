@@ -1,18 +1,24 @@
 import { Button } from "galio-framework";
 import React, { useState, useEffect } from "react";
-import { Text, Image, Animated, View, Dimensions } from "react-native";
+import {
+  Text,
+  Image,
+  Animated,
+  View,
+  Dimensions,
+  ActivityIndicator,
+} from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import tw from "twrnc";
 import ArInput from "../../components/Input";
-import { useIsFocused } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { userRegister } from "../API/actions/register";
 import ToastManager, { Toast } from "toastify-react-native";
+import { carouselData } from "../../constants/constantData";
 
 const { width } = Dimensions.get("window");
 
 export default function UserLogin({ navigation }) {
-  const isFocused = useIsFocused();
   const [InputData, setInputData] = useState({
     first_name: "",
     last_name: "",
@@ -26,31 +32,12 @@ export default function UserLogin({ navigation }) {
     emailError: "",
     passwordError: "",
     confirmPasswordError: "",
-    isValid: false, // Initially invalid
+    isValid: false,
   });
 
-  const animatedValue = new Animated.Value(-500);
+  const [isLoading, setIsLoading] = useState(false); // State for loading
 
-  const carouselData = [
-    {
-      id: 1,
-      title: "Emergency Support",
-      description: "Quick and reliable support during emergencies.",
-      image: require("../../assets/imgs/Login/driver.png"),
-    },
-    {
-      id: 2,
-      title: "Rapid Assistance",
-      description: "Connecting you with nearby helpers.",
-      image: require("../../assets/imgs/Login/tp.png"),
-    },
-    {
-      id: 3,
-      title: "Safe & Secure",
-      description: "Prioritizing your safety in every step.",
-      image: require("../../assets/imgs/Login/user.png"),
-    },
-  ];
+  const animatedValue = new Animated.Value(-500);
 
   useEffect(() => {
     Animated.spring(animatedValue, {
@@ -131,61 +118,84 @@ export default function UserLogin({ navigation }) {
     );
   };
 
-  const btnDisable = () => !InputData.isValid;
+  const btnDisable = () => !InputData.isValid || isLoading;
 
-  const showToasts = (msg) => {
-    if (msg) Toast.error(msg, "top");
+  const showToasts = (type, msg) => {
+    Toast[type](msg, "top");
   };
 
   const handleLogin = async () => {
+    setIsLoading(true); // Start loading
+
     const body = {
-      phone_number: InputData.phone,
+      phone_number: "+91" + InputData.phone,
       email: InputData.email,
       password: InputData.password,
-      confirm_password: InputData.password,
+      confirm_password: InputData.confirm_password,
       first_name: InputData.first_name,
       last_name: InputData.last_name,
     };
     try {
       const res = await userRegister(body);
       if (res.code === 201) {
-        navigation.navigate("home");
-      }
-      showToasts(res.message);
+        handleClear();
+        showToasts("success", "Verification mail has been send!");
+      } else showToasts("error", res.message || "Something went wrong!");
     } catch (error) {
-      console.log(error);
+      showToasts("error", "Something went wrong!");
+      console.log(error, "==================");
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleClear = () => {
+    setInputData({
+      first_name: "",
+      last_name: "",
+      phone: "",
+      email: "",
+      password: "",
+      confirm_password: "",
+      firstNameError: "",
+      lastNameError: "",
+      phoneError: "",
+      emailError: "",
+      passwordError: "",
+      confirmPasswordError: "",
+      isValid: false, // Initially invalid
+    });
   };
 
   return (
     <>
-      {isFocused && (
-        <View style={tw`h-full w-full bg-white`}>
-          <ToastManager style={tw`-mt-16 w-full text-sm`} />
-          <View style={tw`h-[20%] w-full`}>
-            {/* Carousel Section */}
-            <Carousel
-              loop
-              width={width}
-              autoPlay={true}
-              autoPlayInterval={3000}
-              data={carouselData}
-              renderItem={({ item }) => (
-                <View style={tw`h-full w-full items-center justify-center`}>
-                  <Image
-                    source={item.image}
-                    style={tw`h-full w-full rounded-lg`}
-                    resizeMode="contain"
-                  />
-                </View>
-              )}
-            />
-          </View>
+      <View style={tw`h-full w-full bg-white`}>
+        <ToastManager style={tw`-mt-16 max-h-40 h-20 w-full`} />
+        <View style={tw`h-[20%] w-full`}>
+          {/* Carousel Section */}
+          <Carousel
+            loop
+            width={width}
+            autoPlay={true}
+            autoPlayInterval={3000}
+            data={carouselData}
+            renderItem={({ item }) => (
+              <View style={tw`h-full w-full items-center justify-center`}>
+                <Image
+                  source={item.image}
+                  style={tw`h-full w-full rounded-lg`}
+                  resizeMode="contain"
+                />
+              </View>
+            )}
+          />
+        </View>
 
-          <LinearGradient
-            colors={["#e5e7eb", "#FFFFFF"]}
-            style={tw`flex flex-col h-[80%] justify-evenly bg-gray-200 w-full rounded-t-[50px] p-10 elevation-20`}
-          >
+        <LinearGradient
+          colors={["#e5e7eb", "#FFFFFF"]}
+          style={tw`flex flex-col h-[80%] justify-evenly bg-gray-200 w-full rounded-t-[50px] p-10 elevation-20`}
+        >
+          <View style={tw`flex `}>
             <View style={tw`flex flex-row gap-2`}>
               <Text style={tw`font-semibold italic text-2xl mb-2`}>
                 Welcome to
@@ -201,98 +211,99 @@ export default function UserLogin({ navigation }) {
                 Rapid Rescue
               </Animated.Text>
             </View>
-            <View>
-              <ArInput
-                // onBlur={validateFields}
-                onChangeText={(e) => handleChange("first_name", e)}
-                placeholder="First Name *"
-                value={InputData.first_name}
-              />
-              {InputData.firstNameError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.firstNameError}
-                </Text>
-              )}
+            <Text style={tw`font-normal italic text-md`}>
+              Do note your password for login!
+            </Text>
+          </View>
+          <View>
+            <ArInput
+              onChangeText={(e) => handleChange("first_name", e)}
+              placeholder="First Name *"
+              value={InputData.first_name}
+            />
+            {InputData.firstNameError && (
+              <Text style={tw`text-red-500 italic text-sm mb-2`}>
+                {InputData.firstNameError}
+              </Text>
+            )}
 
-              <ArInput
-                // onBlur={validateFields}
-                onChangeText={(e) => handleChange("last_name", e)}
-                placeholder="Last Name *"
-                value={InputData.last_name}
-              />
-              {InputData.lastNameError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.lastNameError}
-                </Text>
-              )}
+            <ArInput
+              onChangeText={(e) => handleChange("last_name", e)}
+              placeholder="Last Name *"
+              value={InputData.last_name}
+            />
+            {InputData.lastNameError && (
+              <Text style={tw`text-red-500 italic text-sm mb-2`}>
+                {InputData.lastNameError}
+              </Text>
+            )}
 
-              <ArInput
-                // onBlur={validateFields}
-                maxLength={10}
-                keyboardType="numeric"
-                onChangeText={(e) => handleChange("phone", e)}
-                placeholder="Phone Number *"
-                value={InputData.phone}
-              />
-              {InputData.phoneError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.phoneError}
-                </Text>
-              )}
+            <ArInput
+              maxLength={10}
+              keyboardType="numeric"
+              onChangeText={(e) => handleChange("phone", e)}
+              placeholder="Phone Number *"
+              value={InputData.phone}
+            />
+            {InputData.phoneError && (
+              <Text style={tw`text-red-500 italic text-sm mb-2`}>
+                {InputData.phoneError}
+              </Text>
+            )}
 
-              <ArInput
-                // onBlur={validateFields}
-                onChangeText={(e) => handleChange("email", e)}
-                placeholder="Email *"
-                value={InputData.email}
-              />
-              {InputData.emailError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.emailError}
-                </Text>
-              )}
+            <ArInput
+              onChangeText={(e) => handleChange("email", e)}
+              placeholder="Email *"
+              value={InputData.email}
+            />
+            {InputData.emailError && (
+              <Text style={tw`text-red-500 italic text-sm mb-2`}>
+                {InputData.emailError}
+              </Text>
+            )}
 
-              <ArInput
-                // onBlur={validateFields}
-                onChangeText={(e) => handleChange("password", e)}
-                placeholder="Password *"
-                secureTextEntry
-                value={InputData.password}
-              />
-              {InputData.passwordError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.passwordError}
-                </Text>
-              )}
+            <ArInput
+              onChangeText={(e) => handleChange("password", e)}
+              placeholder="Password *"
+              secureTextEntry
+              value={InputData.password}
+            />
+            {InputData.passwordError && (
+              <Text style={tw`text-red-500 italic text-sm mb-2`}>
+                {InputData.passwordError}
+              </Text>
+            )}
 
-              <ArInput
-                // onBlur={validateFields}
-                onChangeText={(e) => handleChange("confirm_password", e)}
-                placeholder="Confirm Password *"
-                secureTextEntry
-                value={InputData.confirm_password}
-              />
-              {InputData.confirmPasswordError && (
-                <Text style={tw`text-red-500 italic text-sm mb-2`}>
-                  {InputData.confirmPasswordError}
-                </Text>
-              )}
-            </View>
+            <ArInput
+              onChangeText={(e) => handleChange("confirm_password", e)}
+              placeholder="Confirm Password *"
+              secureTextEntry
+              value={InputData.confirm_password}
+            />
+            {InputData.confirmPasswordError && (
+              <Text style={tw`text-red-500 italic text-sm mb-2`}>
+                {InputData.confirmPasswordError}
+              </Text>
+            )}
+          </View>
 
-            <View style={tw`w-full `}>
-              <Button
-                disabled={btnDisable()}
-                onPress={handleLogin}
-                style={tw`w-full m-0 mt-2 bg-violet-600 rounded-2xl elevation-10 ${
-                  !InputData.isValid ? "opacity-50" : ""
-                }`}
-              >
-                Continue
-              </Button>
-            </View>
-          </LinearGradient>
-        </View>
-      )}
+          <View style={tw`w-full`}>
+            <Button
+              disabled={btnDisable()}
+              onPress={handleLogin}
+              style={tw`w-full m-0 mt-2 bg-violet-600 rounded-2xl elevation-10 ${
+                !InputData.isValid || isLoading ? "opacity-50" : ""
+              }`}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                "Continue"
+              )}
+            </Button>
+          </View>
+        </LinearGradient>
+      </View>
     </>
   );
 }

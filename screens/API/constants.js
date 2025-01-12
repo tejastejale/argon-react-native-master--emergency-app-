@@ -1,4 +1,4 @@
-export const BASE = "https://algobullstodo.pythonanywhere.com";
+export const BASE = "http://emergencyappapi.pythonanywhere.com";
 
 export const LOGIN = `${BASE}/auth-api/login/`;
 

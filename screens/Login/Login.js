@@ -1,46 +1,40 @@
 import { Button } from "galio-framework";
 import React, { useEffect, useRef, useState } from "react";
-import { Text, Image, Animated, View, Dimensions } from "react-native";
+import {
+  Text,
+  Image,
+  Animated,
+  View,
+  Dimensions,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import tw from "twrnc";
 import { LinearGradient } from "expo-linear-gradient";
 import ArInput from "../../components/Input";
+import { makeLogin } from "../API/actions/login";
+import { carouselData } from "../../constants/constantData";
+import ToastManager, { Toast } from "toastify-react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons"; // For custom eye icon
 
 const { width } = Dimensions.get("window");
 
 export default function Login({ navigation }) {
   const [formData, setFormData] = useState({ phone: "", password: "" });
-  const animatedValue = useRef(new Animated.Value(-500)).current; // Start position off-screen to the left
-  const animatedValue2 = useRef(new Animated.Value(300)).current; // Start below the screen
-
-  const carouselData = [
-    {
-      id: 1,
-      title: "Emergency Support",
-      description: "Quick and reliable support during emergencies.",
-      image: require("../../assets/imgs/Login/driver.png"),
-    },
-    {
-      id: 2,
-      title: "Rapid Assistance",
-      description: "Connecting you with nearby helpers.",
-      image: require("../../assets/imgs/Login/tp.png"),
-    },
-    {
-      id: 3,
-      title: "Safe & Secure",
-      description: "Prioritizing your safety in every step.",
-      image: require("../../assets/imgs/Login/user.png"),
-    },
-  ];
+  const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false); // State to toggle password visibility
+  const animatedValue = useRef(new Animated.Value(-500)).current;
+  const animatedValue2 = useRef(new Animated.Value(300)).current;
 
   useEffect(() => {
     setTimeout(() => {
       Animated.spring(animatedValue2, {
-        toValue: 0, // Move to the top position
-        friction: 6, // Spring friction
-        tension: 50, // Spring tension
-        useNativeDriver: true, // For smooth performance
+        toValue: 0,
+        friction: 6,
+        tension: 50,
+        useNativeDriver: true,
       }).start();
     }, 400);
   }, [animatedValue2]);
@@ -48,16 +42,47 @@ export default function Login({ navigation }) {
   useEffect(() => {
     setTimeout(() => {
       Animated.spring(animatedValue, {
-        toValue: 0, // Move to the position
-        friction: 6, // Spring friction
-        tension: 50, // Spring tension
-        useNativeDriver: true, // For smooth performance
+        toValue: 0,
+        friction: 6,
+        tension: 50,
+        useNativeDriver: true,
       }).start();
     }, 400);
   }, [animatedValue]);
 
+  const isValid = () => !(formData.password && formData.phone);
+
+  const showToasts = (type, msg) => {
+    Toast[type](msg, "top");
+  };
+
+  const handleLogin = async () => {
+    setLoading(true);
+    await AsyncStorage.clear();
+    try {
+      const body = {
+        phone_number: `+91${formData.phone}`,
+        password: formData.password,
+      };
+      const res = await makeLogin(body);
+      if (res.code === 200) {
+        showToasts("success", res.message);
+        navigation.navigate("Home");
+      } else showToasts("error", res || "Something went wrong!");
+    } catch (error) {
+      showToasts("error", "Something went wrong!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClear = () => {
+    setFormData({ phone: "", password: "" });
+  };
+
   return (
     <View style={tw`h-full w-full bg-white`}>
+      <ToastManager style={tw`-mt-16 max-h-40 h-20 w-full`} />
       {/* Carousel Section */}
       <View style={tw`h-[40%] w-full`}>
         <Carousel
@@ -73,8 +98,6 @@ export default function Login({ navigation }) {
                 style={tw`h-full w-full rounded-lg`}
                 resizeMode="contain"
               />
-              {/* <Text style={tw`text-xl font-bold mt-4`}>{item.title}</Text>
-              <Text style={tw`text-sm text-gray-600`}>{item.description}</Text> */}
             </View>
           )}
         />
@@ -93,33 +116,49 @@ export default function Login({ navigation }) {
             value={formData.phone}
             onChangeText={(text) => setFormData({ ...formData, phone: text })}
           />
-          <ArInput
-            style={tw`border p-2 rounded-lg`}
-            placeholder="Password *"
-            value={formData.password}
-            onChangeText={(text) =>
-              setFormData({ ...formData, password: text })
-            }
-          />
+          <View style={tw`relative`}>
+            <ArInput
+              style={tw`border p-2 rounded-lg`}
+              placeholder="Password *"
+              secureTextEntry={!passwordVisible} // Toggle password visibility
+              value={formData.password}
+              onChangeText={(text) =>
+                setFormData({ ...formData, password: text })
+              }
+            />
+            <TouchableOpacity
+              onPress={() => setPasswordVisible(!passwordVisible)} // Toggle visibility on press
+              style={tw`absolute right-4 top-4.5 transform -translate-y-1/2`}
+            >
+              <Ionicons
+                name={passwordVisible ? "eye-off" : "eye"}
+                size={24}
+                color="gray"
+              />
+            </TouchableOpacity>
+          </View>
         </View>
         <View>
-          <View style={tw`w-full `}>
-            <View>
-              <Animated.View
-                style={[
-                  {
-                    transform: [{ translateY: animatedValue2 }],
-                  },
-                ]}
+          <View style={tw`w-full`}>
+            <Animated.View
+              style={{
+                transform: [{ translateY: animatedValue2 }],
+              }}
+            >
+              <Button
+                disabled={isValid() || loading} // Disable if loading or form is invalid
+                style={tw`w-full bg-violet-600 rounded-2xl elevation-10 mx-0 ${
+                  isValid() || loading ? "opacity-50" : ""
+                }`}
+                onPress={handleLogin}
               >
-                <Button
-                  style={tw`w-full bg-violet-600 rounded-2xl elevation-10 mx-0`}
-                  onPress={() => navigation.navigate("Home")}
-                >
-                  Make a Login
-                </Button>
-              </Animated.View>
-            </View>
+                {loading ? (
+                  <ActivityIndicator size="small" color="white" /> // Show loader
+                ) : (
+                  "Make a Login"
+                )}
+              </Button>
+            </Animated.View>
           </View>
         </View>
       </LinearGradient>

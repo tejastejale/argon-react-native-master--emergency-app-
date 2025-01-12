@@ -38,6 +38,7 @@ function cacheImages(images) {
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
+
   useEffect(() => {
     async function prepare() {
       let success = false;

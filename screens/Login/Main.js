@@ -4,6 +4,7 @@ import { Text, Image, Animated, View, Dimensions } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import tw from "twrnc";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
 
@@ -33,6 +34,10 @@ export default function MainScreen({ navigation }) {
   ];
 
   useEffect(() => {
+    if (handleToken()) navigation.navigate("Home");
+  }, []);
+
+  useEffect(() => {
     setTimeout(() => {
       Animated.spring(animatedValue2, {
         toValue: 0, // Move to the top position
@@ -53,6 +58,11 @@ export default function MainScreen({ navigation }) {
       }).start();
     }, 400);
   }, [animatedValue]);
+
+  const handleToken = async () => {
+    const token = await AsyncStorage.getItem("token");
+    return token;
+  };
 
   return (
     <View style={tw`h-full w-full bg-white`}>
