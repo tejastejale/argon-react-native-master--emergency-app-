@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Platform,
   Dimensions,
+  View,
 } from "react-native";
 import { Button, Block, NavBar, Text, theme } from "galio-framework";
 
@@ -12,6 +13,10 @@ import Icon from "./Icon";
 import Input from "./Input";
 import Tabs from "./Tabs";
 import argonTheme from "../constants/Theme";
+
+import tw from "twrnc";
+import { makeLogout } from "../screens/API/actions/logout";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { height, width } = Dimensions.get("window");
 const iPhoneX = () =>
@@ -66,6 +71,7 @@ class Header extends React.Component {
     const { back, navigation } = this.props;
     return back ? navigation.goBack() : navigation.openDrawer();
   };
+
   renderRight = () => {
     const { white, title, navigation } = this.props;
 
@@ -263,14 +269,16 @@ class Header extends React.Component {
     const { search, options, tabs } = this.props;
     if (search || tabs || options) {
       return (
-        <Block center>
-          {/* {search ? this.renderSearch() : null} */}
-          {/* {options ? this.renderOptions() : null} */}
-          {/* {tabs ? this.renderTabs() : null} */}
-        </Block>
+        <Text>a</Text>
+        // <Block center>
+        //   {/* {search ? this.renderSearch() : null} */}
+        //   {/* {options ? this.renderOptions() : null} */}
+        //   {/* {tabs ? this.renderTabs() : null} */}
+        // </Block>
       );
     }
   };
+
   render() {
     const {
       back,
@@ -301,6 +309,18 @@ class Header extends React.Component {
       bgColor && { backgroundColor: bgColor },
     ];
 
+    const handleLogout = async () => {
+      try {
+        const res = await makeLogout();
+        if (res.code === 200) {
+          navigation.navigate("Login");
+          AsyncStorage.clear();
+        }
+      } catch (error) {
+        alert("Could not logout, try again later!");
+      }
+    };
+
     return (
       <Block style={headerStyles}>
         <NavBar
@@ -309,7 +329,7 @@ class Header extends React.Component {
           style={navbarStyles}
           transparent={transparent}
           // right={this.renderRight()}
-          rightStyle={{ alignItems: "center" }}
+          // rightStyle={{ alignItems: "center" }}
           left={
             <Icon
               name={back ? "chevron-left" : "menu"}
@@ -323,6 +343,30 @@ class Header extends React.Component {
               style={{ marginTop: 2 }}
             />
           }
+          right={
+            <View style={tw`flex flex-row`}>
+              <Text
+                style={[
+                  styles.title,
+                  { color: argonTheme.COLORS[white ? "WHITE" : "HEADER"] },
+                  titleColor && { color: titleColor },
+                ]}
+              >
+                Logout
+              </Text>
+              <Icon
+                name={"logout"}
+                family="MaterialIcons"
+                size={20}
+                onPress={handleLogout}
+                color={
+                  iconColor ||
+                  (white ? argonTheme.COLORS.WHITE : argonTheme.COLORS.ICON)
+                }
+                style={tw`-ml-3 font-bold`}
+              />
+            </View>
+          }
           leftStyle={{ paddingVertical: 12, flex: 0.2 }}
           titleStyle={[
             styles.title,
@@ -330,8 +374,8 @@ class Header extends React.Component {
             titleColor && { color: titleColor },
           ]}
           {...props}
-        />
-        {this.renderHeader()}
+        ></NavBar>
+        {/* {this.renderHeader()} */}
       </Block>
     );
   }
@@ -352,6 +396,9 @@ const styles = StyleSheet.create({
     // paddingBottom: theme.SIZES.BASE * 1.5,
     // paddingTop: iPhoneX ? theme.SIZES.BASE * 4 : theme.SIZES.BASE,
     zIndex: 5,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   shadow: {
     backgroundColor: theme.COLORS.WHITE,

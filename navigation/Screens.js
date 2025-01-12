@@ -158,7 +158,6 @@ function HomeStack(props) {
   return (
     <Stack.Navigator
       screenOptions={{
-        mode: "card",
         headerShown: "screen",
       }}
     >
@@ -287,7 +286,7 @@ function AppStack(props) {
         name="Profile"
         component={ProfileStack}
         options={{
-          headerShown: false,
+          headerShown: true,
         }}
       />
       {/* <Drawer.Screen
