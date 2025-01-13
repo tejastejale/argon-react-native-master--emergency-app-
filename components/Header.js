@@ -312,10 +312,8 @@ class Header extends React.Component {
     const handleLogout = async () => {
       try {
         const res = await makeLogout();
-        if (res.code === 200) {
-          navigation.navigate("Login");
-          AsyncStorage.clear();
-        }
+        navigation.navigate("Login");
+        AsyncStorage.clear();
       } catch (error) {
         alert("Could not logout, try again later!");
       }

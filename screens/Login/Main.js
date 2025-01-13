@@ -34,35 +34,34 @@ export default function MainScreen({ navigation }) {
   ];
 
   useEffect(() => {
-    if (handleToken()) navigation.navigate("Home");
-  }, []);
+    const checkToken = async () => {
+      const token = await AsyncStorage.getItem("token");
+      let obj = JSON.parse(token);
+      if (obj.data?.token) {
+        navigation.navigate("Home");
+      }
+    };
 
-  useEffect(() => {
+    checkToken();
+
     setTimeout(() => {
       Animated.spring(animatedValue2, {
-        toValue: 0, // Move to the top position
-        friction: 6, // Spring friction
-        tension: 50, // Spring tension
-        useNativeDriver: true, // For smooth performance
+        toValue: 0,
+        friction: 6,
+        tension: 50,
+        useNativeDriver: true,
       }).start();
     }, 400);
-  }, [animatedValue2]);
 
-  useEffect(() => {
     setTimeout(() => {
       Animated.spring(animatedValue, {
-        toValue: 0, // Move to the position
-        friction: 6, // Spring friction
-        tension: 50, // Spring tension
-        useNativeDriver: true, // For smooth performance
+        toValue: 0,
+        friction: 6,
+        tension: 50,
+        useNativeDriver: true,
       }).start();
     }, 400);
-  }, [animatedValue]);
-
-  const handleToken = async () => {
-    const token = await AsyncStorage.getItem("token");
-    return token;
-  };
+  }, [animatedValue, animatedValue2, navigation]);
 
   return (
     <View style={tw`h-full w-full bg-white`}>

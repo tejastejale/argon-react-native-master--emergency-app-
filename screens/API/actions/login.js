@@ -4,7 +4,7 @@ import { login } from "../index";
 export const makeLogin = async (body) => {
   try {
     const res = await login(body);
-    const token = res.data.data.token;
+    const token = JSON.stringify(res.data);
     await AsyncStorage.setItem("token", token);
     return res.data;
   } catch (error) {
