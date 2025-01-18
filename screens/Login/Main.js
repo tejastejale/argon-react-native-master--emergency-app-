@@ -9,8 +9,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const { width } = Dimensions.get("window");
 
 export default function MainScreen({ navigation }) {
-  const animatedValue = useRef(new Animated.Value(-500)).current; // Start position off-screen to the left
-  const animatedValue2 = useRef(new Animated.Value(300)).current; // Start below the screen
+  const animatedValue = useRef(new Animated.Value(-500)).current;
+  const animatedValue2 = useRef(new Animated.Value(300)).current;
 
   const carouselData = [
     {
@@ -37,7 +37,7 @@ export default function MainScreen({ navigation }) {
     const checkToken = async () => {
       const token = await AsyncStorage.getItem("token");
       let obj = JSON.parse(token);
-      if (obj.data?.token) {
+      if (obj?.data?.token) {
         navigation.navigate("Home");
       }
     };
@@ -63,6 +63,11 @@ export default function MainScreen({ navigation }) {
     }, 400);
   }, [animatedValue, animatedValue2, navigation]);
 
+  // Calculate dynamic font size
+  const getResponsiveFontSize = (baseSize) => {
+    return Math.round((baseSize * width) / 375); // Assuming 375 is the base screen width (iPhone X)
+  };
+
   return (
     <View style={tw`h-full w-full bg-white`}>
       {/* Carousel Section */}
@@ -80,8 +85,6 @@ export default function MainScreen({ navigation }) {
                 style={tw`h-full w-full rounded-lg`}
                 resizeMode="contain"
               />
-              {/* <Text style={tw`text-xl font-bold mt-4`}>{item.title}</Text>
-              <Text style={tw`text-sm text-gray-600`}>{item.description}</Text> */}
             </View>
           )}
         />
@@ -90,17 +93,23 @@ export default function MainScreen({ navigation }) {
       {/* Bottom Content Section */}
       <LinearGradient
         colors={["#e5e7eb", "#FFFFFF"]}
-        style={tw` w-full h-[60%] rounded-t-[50px] p-10 flex flex-col justify-between elevation-20`}
+        style={tw`w-full h-[60%] rounded-t-[50px] p-10 flex flex-col justify-between elevation-20`}
       >
         <View>
           <View style={tw`flex flex-row gap-2`}>
-            <Text style={tw`font-semibold italic text-2xl mb-2`}>
+            <Text
+              style={[
+                tw`font-semibold italic mb-2`,
+                { fontSize: getResponsiveFontSize(24) },
+              ]}
+            >
               Welcome to
             </Text>
             <Animated.Text
               style={[
-                tw`text-violet-600 text-2xl italic font-semibold`,
+                tw`text-violet-600 italic font-semibold`,
                 {
+                  fontSize: getResponsiveFontSize(24),
                   transform: [{ translateX: animatedValue }],
                 },
               ]}
@@ -108,7 +117,12 @@ export default function MainScreen({ navigation }) {
               Rapid Rescue
             </Animated.Text>
           </View>
-          <Text style={tw`font-normal italic text-md`}>
+          <Text
+            style={[
+              tw`font-normal italic`,
+              { fontSize: getResponsiveFontSize(16) },
+            ]}
+          >
             We provide solutions to fulfill your emergency needs with just one
             click !!!
           </Text>
@@ -122,17 +136,19 @@ export default function MainScreen({ navigation }) {
               Register as User
             </Button>
             <Button
-              style={tw`w-full bg-violet-600 rounded-2xl elevation-10 mx-0`}
+              style={tw`w-full bg-violet-600 rounded-2xl elevation-10 mx-0 mt-2`}
               onPress={() => navigation.navigate("DriverLogin")}
             >
               Register as Driver
             </Button>
           </View>
-          <View style={tw`w-full `}>
+          <View style={tw`w-full mt-4`}>
             <View style={tw`flex flex-row justify-center items-center`}>
-              <View style={tw`w-1/2 bg-gray-300 h-[2px]`}></View>
-              <Text style={tw`px-2`}>or</Text>
-              <View style={tw`w-1/2 bg-gray-300 h-[2px]`}></View>
+              <View style={tw`w-1/2 bg-gray-300 h-[2px]`} />
+              <Text style={[tw`px-2`, { fontSize: getResponsiveFontSize(14) }]}>
+                or
+              </Text>
+              <View style={tw`w-1/2 bg-gray-300 h-[2px]`} />
             </View>
             <View>
               <Animated.View
