@@ -13,8 +13,9 @@ import tw from "twrnc";
 import ArInput from "../../components/Input";
 import { LinearGradient } from "expo-linear-gradient";
 import { userRegister } from "../API/actions/register";
-import ToastManager, { Toast } from "toastify-react-native";
 import { carouselData } from "../../constants/constantData";
+import { Toast, AlertNotificationRoot } from "react-native-alert-notification"; // Import alert notification module
+import ArButton from "../../components/Button";
 
 const { width } = Dimensions.get("window");
 
@@ -121,7 +122,24 @@ export default function UserLogin({ navigation }) {
   const btnDisable = () => !InputData.isValid || isLoading;
 
   const showToasts = (type, msg) => {
-    Toast[type](msg, "top");
+    // Using react-native-alert-notification to display custom notifications
+    if (type === "success") {
+      Toast.show({
+        title: "Success!",
+        description: msg,
+        backgroundColor: "#34C759", // Green background for success
+        textColor: "#ffffff", // White text color
+        duration: 4000, // Display for 4 seconds
+      });
+    } else {
+      Toast.show({
+        title: "Error!",
+        description: msg,
+        backgroundColor: "#FF3B30", // Red background for error
+        textColor: "#ffffff", // White text color
+        duration: 4000, // Display for 4 seconds
+      });
+    }
   };
 
   const handleLogin = async () => {
@@ -139,11 +157,10 @@ export default function UserLogin({ navigation }) {
       const res = await userRegister(body);
       if (res.code === 201) {
         handleClear();
-        showToasts("success", "Verification mail has been send!");
+        showToasts("success", "Verification mail has been sent!");
       } else showToasts("error", res.message || "Something went wrong!");
     } catch (error) {
       showToasts("error", "Something went wrong!");
-      console.log(error, "==================");
     } finally {
       setIsLoading(false);
     }
@@ -163,14 +180,13 @@ export default function UserLogin({ navigation }) {
       emailError: "",
       passwordError: "",
       confirmPasswordError: "",
-      isValid: false, // Initially invalid
+      isValid: false,
     });
   };
 
   return (
-    <>
+    <AlertNotificationRoot>
       <View style={tw`h-full w-full bg-white`}>
-        <ToastManager style={tw`-mt-16 max-h-40 h-20 w-full`} />
         <View style={tw`h-[20%] w-full`}>
           {/* Carousel Section */}
           <Carousel
@@ -196,6 +212,13 @@ export default function UserLogin({ navigation }) {
           style={tw`flex flex-col h-[80%] justify-evenly bg-gray-200 w-full rounded-t-[50px] p-10 elevation-20`}
         >
           <View style={tw`flex `}>
+            <ArButton
+              onPress={() =>
+                showToasts("success", "Verification mail has been sent!")
+              }
+            >
+              asd
+            </ArButton>
             <View style={tw`flex flex-row gap-2`}>
               <Text style={tw`font-semibold italic text-2xl mb-2`}>
                 Welcome to
@@ -304,6 +327,6 @@ export default function UserLogin({ navigation }) {
           </View>
         </LinearGradient>
       </View>
-    </>
+    </AlertNotificationRoot>
   );
 }

@@ -22,6 +22,7 @@ const Home = () => {
   const [locData, setLocData] = useState(null);
   const [loc, setLoc] = useState(null);
   const [isMapLoading, setIsMapLoading] = useState(true);
+  const [showMap, setShowMap] = useState(true);
   const [sheetArrow, setSheetArrow] = useState(0);
   // Bottom sheet snap points
   const snapPoints = [150, height * 0.4];
@@ -47,9 +48,12 @@ const Home = () => {
         setLoc([location.coords.longitude, location.coords.latitude]);
         return;
       } else {
-        alert("Choose Precise while giving Location permission.");
+        setIsMapLoading(false);
+        setShowMap(false);
+        alert("You must grant location permission for tracking!");
       }
     } catch (error) {
+      setShowMap(false);
       console.error("Error requesting permissions or getting location:", error);
       alert("Error while getting location, please try again later!");
     }
@@ -69,7 +73,7 @@ const Home = () => {
           <Text style={tw`mt-2 text-base text-black`}>Loading map...</Text>
         </View>
       )}
-      {loc && locData && (
+      {loc && locData && showMap && (
         <MapView
           style={tw`h-full w-full`}
           styleURL="mapbox://styles/mapbox/outdoors-v12"
@@ -92,6 +96,15 @@ const Home = () => {
           </PointAnnotation>
         </MapView>
       )}
+      {!showMap && (
+        <View style={tw`flex h-full align-center justify-center`}>
+          <Text
+            style={tw`text-lg text-center text-red-400 font-medium tracking-widest`}
+          >
+            Please grant location permission!
+          </Text>
+        </View>
+      )}
       <BottomSheet
         ref={bottomSheetRef}
         snapPoints={snapPoints}
@@ -112,7 +125,7 @@ const Home = () => {
       >
         <BottomSheetView style={tw`h-full px-4`}>
           <View
-            style={tw`bg-white p-3 py-1 rounded-lg mb-3 shadow-md flex flex-row items-center`}
+            style={tw`bg-white p-3 py-1 h-fit rounded-lg mb-3 shadow-md flex flex-row items-center`}
           >
             <Image source={ambulance} style={tw`w-16 h-20 mr-5`} />
             <View style={tw`flex`}>
@@ -123,7 +136,7 @@ const Home = () => {
             </View>
           </View>
           <View
-            style={tw`bg-white p-3 rounded-lg mb-3 shadow-md flex flex-row items-center`}
+            style={tw`bg-white p-3 rounded-lg mb-3 h-fit shadow-md flex flex-row items-center`}
           >
             <Image source={fire} style={tw`w-16 h-16 mr-5`} />
             <View style={tw`flex`}>
@@ -134,7 +147,7 @@ const Home = () => {
             </View>
           </View>
           <View
-            style={tw`bg-white p-3 rounded-lg mb-3 shadow-md flex flex-row items-center`}
+            style={tw`bg-white p-3 rounded-lg mb-3 h-fit shadow-md flex flex-row items-center`}
           >
             <Image source={police} style={tw`w-14 h-16 mr-5`} />
             <View style={tw`flex`}>

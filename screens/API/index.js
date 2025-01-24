@@ -33,7 +33,6 @@ export const login = (body) => {
 export const user_register = (body) => API.post(`${USER_REGISTER}`, body);
 
 export const driver_register = (body) => {
-  console.log(body);
   return API.post(`${DRIVER_REGISTER}`, body, {
     headers: {
       "Content-Type": "multipart/form-data",

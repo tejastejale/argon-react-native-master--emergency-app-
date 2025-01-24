@@ -14,6 +14,6 @@ export const driverRegister = async (body) => {
     const res = await driver_register(body);
     return res;
   } catch (error) {
-    return error;
+    return error.response.data;
   }
 };
