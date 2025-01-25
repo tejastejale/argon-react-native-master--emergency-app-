@@ -8,6 +8,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 // Before rendering any navigation stack
 import { enableScreens } from "react-native-screens";
+import * as Linking from "expo-linking";
+
 enableScreens();
 
 import Screens from "./navigation/Screens";
@@ -48,6 +50,17 @@ export default function App() {
     level: ReanimatedLogLevel.warn,
     strict: false,
   });
+
+  useEffect(() => {
+    let url = Linking.createURL();
+    console.log(JSON.stringify(url));
+    u;
+    const handleLink = (e) => {
+      let data = Linking.parse(e.url);
+      console.log(data, "data");
+    };
+    Linking.addEventListener("url", handleLink);
+  }, []);
 
   useEffect(() => {
     async function prepare() {

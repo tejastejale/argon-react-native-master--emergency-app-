@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>com.anonymous.argonfreereactnative</string>
+          <string>com.rapid.rescue</string>
         </array>
       </dict>
     </array>
