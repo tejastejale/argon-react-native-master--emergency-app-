@@ -13,8 +13,13 @@ import tw from "twrnc";
 import ArInput from "../../components/Input";
 import { LinearGradient } from "expo-linear-gradient";
 import { userRegister } from "../API/actions/register";
-import ToastManager, { Toast } from "toastify-react-native";
 import { carouselData } from "../../constants/constantData";
+import {
+  Toast,
+  AlertNotificationRoot,
+  ALERT_TYPE,
+} from "react-native-alert-notification"; // Import alert notification module
+import ArButton from "../../components/Button";
 
 const { width } = Dimensions.get("window");
 
@@ -121,7 +126,26 @@ export default function UserLogin({ navigation }) {
   const btnDisable = () => !InputData.isValid || isLoading;
 
   const showToasts = (type, msg) => {
-    Toast[type](msg, "top");
+    // Using react-native-alert-notification to display custom notifications
+    if (type === "success") {
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: "Success!",
+        textBody: msg,
+        backgroundColor: "#34C759", // Green background for success
+        textColor: "#ffffff", // White text color
+        duration: 4000, // Display for 4 seconds
+      });
+    } else {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error!",
+        textBody: msg,
+        backgroundColor: "#FF3B30", // Red background for error
+        textColor: "#ffffff", // White text color
+        duration: 4000, // Display for 4 seconds
+      });
+    }
   };
 
   const handleLogin = async () => {
@@ -137,16 +161,24 @@ export default function UserLogin({ navigation }) {
     };
     try {
       const res = await userRegister(body);
-      if (res.code === 201) {
+      if (res?.code === 201) {
         handleClear();
-        showToasts("success", "Verification mail has been send!");
-      } else showToasts("error", res.message || "Something went wrong!");
+        showToasts("success", "Verification mail has been sent!");
+      } else {
+        showToasts("error", showError(res));
+      }
     } catch (error) {
-      showToasts("error", "Something went wrong!");
-      console.log(error, "==================");
+      showToasts("error", "showError(error)");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const showError = (res) => {
+    const response = res?.data;
+    if (response?.errors?.[0]) return response.errors[0];
+    if (response?.error) return response.error;
+    return "Something went wrong!";
   };
 
   const handleClear = () => {
@@ -163,14 +195,13 @@ export default function UserLogin({ navigation }) {
       emailError: "",
       passwordError: "",
       confirmPasswordError: "",
-      isValid: false, // Initially invalid
+      isValid: false,
     });
   };
 
   return (
-    <>
+    <AlertNotificationRoot>
       <View style={tw`h-full w-full bg-white`}>
-        <ToastManager style={tw`-mt-16 max-h-40 h-20 w-full`} />
         <View style={tw`h-[20%] w-full`}>
           {/* Carousel Section */}
           <Carousel
@@ -304,6 +335,6 @@ export default function UserLogin({ navigation }) {
           </View>
         </LinearGradient>
       </View>
-    </>
+    </AlertNotificationRoot>
   );
 }

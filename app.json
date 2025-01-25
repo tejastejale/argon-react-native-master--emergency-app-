@@ -8,6 +8,7 @@
     "version": "1.7.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "scheme": "com.rapid.rescue",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "cover",
@@ -19,7 +20,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.argonfreereactnative"
+      "bundleIdentifier": "com.rapid.rescue"
     },
 
     "plugins": [
@@ -34,7 +35,7 @@
     "description": "Argon React Native, based on Argon Design System. Coded by Creative Tim",
     "android": {
       "usesCleartextTraffic": true,
-      "package": "com.anonymous.argonfreereactnative",
+      "package": "com.rapid.rescue",
       "permissions": ["ACCESS_FINE_LOCATION"]
     },
     "extra": {

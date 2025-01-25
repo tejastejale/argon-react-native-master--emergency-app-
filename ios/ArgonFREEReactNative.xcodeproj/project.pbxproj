@@ -366,7 +366,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.argonfreereactnative;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rapid.rescue;
 				PRODUCT_NAME = ArgonFREEReactNative;
 				SWIFT_OBJC_BRIDGING_HEADER = "ArgonFREEReactNative/ArgonFREEReactNative-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -394,7 +394,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.argonfreereactnative;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rapid.rescue;
 				PRODUCT_NAME = ArgonFREEReactNative;
 				SWIFT_OBJC_BRIDGING_HEADER = "ArgonFREEReactNative/ArgonFREEReactNative-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

@@ -94,9 +94,9 @@ packagingOptions {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.argonfreereactnative'
+    namespace 'com.rapid.rescue'
     defaultConfig {
-        applicationId 'com.anonymous.argonfreereactnative'
+        applicationId 'com.rapid.rescue'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

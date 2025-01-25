@@ -16,15 +16,23 @@ const API = axios.create({
 API.interceptors.request.use(async (req) => {
   const token = await AsyncStorage.getItem("token");
   if (token) {
-    req.headers.Authorization = `Token ${token}`; // Add Token as the prefix
+    req.headers.Authorization = `Token ${token}`;
   }
   return req;
 });
 
-export const login = (body) => API.post(`${LOGIN}`, body);
+export const login = (body) => {
+  return API.post(`${LOGIN}`, body);
+};
 
 export const user_register = (body) => API.post(`${USER_REGISTER}`, body);
 
-export const driver_register = (body) => API.post(`${DRIVER_REGISTER}`, body);
+export const driver_register = (body) => {
+  return API.post(`${DRIVER_REGISTER}`, body, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
 
 export const logout = () => API.post(`${LOGOUT}`);

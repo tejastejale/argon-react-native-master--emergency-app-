@@ -1,4 +1,4 @@
-package com.anonymous.argonfreereactnative
+package com.rapid.rescue
 
 import android.app.Application
 import android.content.res.Configuration

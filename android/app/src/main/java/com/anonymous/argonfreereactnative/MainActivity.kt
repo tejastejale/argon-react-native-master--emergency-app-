@@ -1,4 +1,4 @@
-package com.anonymous.argonfreereactnative
+package com.rapid.rescue
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
