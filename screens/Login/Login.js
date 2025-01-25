@@ -18,7 +18,8 @@ import { carouselData } from "../../constants/constantData";
 import { Toast, AlertNotificationRoot } from "react-native-alert-notification";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons"; // For custom eye icon
-
+import ArButton from "../../components/Button";
+import * as Linking from "expo-linking";
 const { width } = Dimensions.get("window");
 
 export default function Login({ navigation }) {
@@ -72,7 +73,9 @@ export default function Login({ navigation }) {
       if (res.code === 200) {
         showToasts("success", res.message);
         navigation.navigate("Home");
-      } else showToasts("DANGER", res || "Something went wrong!");
+      } else {
+        showToasts("DANGER", res.data.errors[0] || "Something went wrong!");
+      }
     } catch (error) {
       showToasts("DANGER", "Something went wrong!");
     } finally {

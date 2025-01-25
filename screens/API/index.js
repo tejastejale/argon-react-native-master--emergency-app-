@@ -16,18 +16,13 @@ const API = axios.create({
 API.interceptors.request.use(async (req) => {
   const token = await AsyncStorage.getItem("token");
   if (token) {
-    req.headers.Authorization = `Token ${token}`; // Add Token as the prefix
+    req.headers.Authorization = `Token ${token}`;
   }
   return req;
 });
 
 export const login = (body) => {
-  //  phone_number: `+91${formData.phone}`,
-  //       password: formData.password,
-  const formData = new FormData();
-  formData.append("phone_number", body.phone_number);
-  formData.append("password", body.password);
-  return API.post(`${LOGIN}`, formData);
+  return API.post(`${LOGIN}`, body);
 };
 
 export const user_register = (body) => API.post(`${USER_REGISTER}`, body);

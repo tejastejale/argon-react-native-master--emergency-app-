@@ -5,7 +5,7 @@ export const userRegister = async (body) => {
     const res = await user_register(body);
     return res.data;
   } catch (error) {
-    return error;
+    return error.response?.data;
   }
 };
 
@@ -14,6 +14,6 @@ export const driverRegister = async (body) => {
     const res = await driver_register(body);
     return res;
   } catch (error) {
-    return error.response.data;
+    return error.response?.data;
   }
 };

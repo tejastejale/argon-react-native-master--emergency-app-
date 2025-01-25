@@ -161,15 +161,24 @@ export default function UserLogin({ navigation }) {
     };
     try {
       const res = await userRegister(body);
-      if (res.code === 201) {
+      if (res?.code === 201) {
         handleClear();
         showToasts("success", "Verification mail has been sent!");
-      } else showToasts("error", res.message || "Something went wrong!");
+      } else {
+        showToasts("error", showError(res));
+      }
     } catch (error) {
-      showToasts("error", "Something went wrong!");
+      showToasts("error", "showError(error)");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const showError = (res) => {
+    const response = res?.data;
+    if (response?.errors?.[0]) return response.errors[0];
+    if (response?.error) return response.error;
+    return "Something went wrong!";
   };
 
   const handleClear = () => {

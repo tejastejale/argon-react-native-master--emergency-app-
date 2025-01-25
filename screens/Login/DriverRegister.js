@@ -27,21 +27,21 @@ export default function DriverLogin({ navigation }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
   const [items, setItems] = useState([
-    { label: "Ambulance", value: 1 },
+    { label: "Ambulance", value: 0 },
     { label: "Fire Brigade", value: 2 },
-    { label: "Police", value: 3 },
+    { label: "Police", value: 1 },
   ]);
   const [Data, setData] = useState({
-    firstName: "",
-    lastName: "",
-    phoneNumber: "",
-    email: "",
-    type: 0,
+    firstName: "tejas",
+    lastName: "tejale",
+    phoneNumber: "1234567895",
+    email: "tejas@scalen.io",
+    type: null, // 0:ambulance 1:police 2:fire
     license: null,
     passportPhoto: null,
     carPhoto: [],
-    password: "",
-    confirmPassword: "",
+    password: "tejascode47",
+    confirmPassword: "tejascode47",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -56,7 +56,7 @@ export default function DriverLogin({ navigation }) {
     if (!Data.lastName) newErrors.lastName = "Last Name is required.";
     if (!Data.phoneNumber || !/^\d{10}$/.test(Data.phoneNumber))
       newErrors.phoneNumber = "A valid 10-digit Phone Number is required.";
-    if (!Data.type) newErrors.type = "Type is required.";
+    if (Data.type === null) newErrors.type = "Type is required.";
     if (!Data.email) newErrors.email = "Email is required.";
     if (!Data.license) newErrors.license = "License is required.";
     if (!Data.passportPhoto)
@@ -69,7 +69,6 @@ export default function DriverLogin({ navigation }) {
       newErrors.password = "Password must be at least 6 characters.";
     if (Data.password !== Data.confirmPassword)
       newErrors.confirmPassword = "Passwords do not match.";
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -85,7 +84,6 @@ export default function DriverLogin({ navigation }) {
         formData.append("last_name", Data.lastName);
         formData.append("phone_number", "+91" + Data.phoneNumber);
         formData.append("email", Data.email);
-        formData.append("license", "123456789");
         formData.append("type", Data.type);
         formData.append("password", Data.password);
         formData.append("confirm_password", Data.password);
@@ -96,6 +94,15 @@ export default function DriverLogin({ navigation }) {
             uri: Data.passportPhoto,
             type: "image/jpeg",
             name: "driver_photo.jpg",
+          });
+        }
+
+        // Append license photo
+        if (Data.license) {
+          formData.append("license_pic", {
+            uri: Data.license,
+            type: "image/jpeg",
+            name: "license.jpg",
           });
         }
 
@@ -111,11 +118,15 @@ export default function DriverLogin({ navigation }) {
           });
         }
 
+        console.log(formData);
+        console.log(Data);
+
         const res = await driverRegister(formData);
+        console.log(res);
         setLoading(false);
 
         if (res.data?.code) {
-          handleClear();
+          // handleClear();
           Dialog.show({
             autoClose: false,
             type: "SUCCESS",
@@ -128,13 +139,20 @@ export default function DriverLogin({ navigation }) {
           Toast.show({
             type: "DANGER",
             title: "Registration Failed",
-            textBody: "Something went wrong, please try again later!",
+            textBody: showError(res),
           });
         }
       } catch (error) {
         alert("Something went wrong, try again later!");
       }
     }
+  };
+
+  const showError = (res) => {
+    const response = res?.data;
+    if (response?.errors?.[0]) return response.errors[0];
+    if (response?.error) return response.error;
+    return "Something went wrong!";
   };
 
   const handleFileUpload = async (field) => {
@@ -174,7 +192,7 @@ export default function DriverLogin({ navigation }) {
       lastName: "",
       phoneNumber: "",
       email: "",
-      type: 0,
+      type: null,
       license: null,
       passportPhoto: null,
       carPhoto: [],

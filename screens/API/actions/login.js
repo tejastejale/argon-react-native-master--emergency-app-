@@ -8,6 +8,6 @@ export const makeLogin = async (body) => {
     await AsyncStorage.setItem("token", token);
     return res.data;
   } catch (error) {
-    return error.message;
+    return error.response?.data;
   }
 };
