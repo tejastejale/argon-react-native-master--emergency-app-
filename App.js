@@ -52,9 +52,6 @@ export default function App() {
   });
 
   useEffect(() => {
-    let url = Linking.createURL();
-    console.log(JSON.stringify(url));
-    u;
     const handleLink = (e) => {
       let data = Linking.parse(e.url);
       console.log(data, "data");
