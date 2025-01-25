@@ -14,7 +14,11 @@ import ArInput from "../../components/Input";
 import { LinearGradient } from "expo-linear-gradient";
 import { userRegister } from "../API/actions/register";
 import { carouselData } from "../../constants/constantData";
-import { Toast, AlertNotificationRoot } from "react-native-alert-notification"; // Import alert notification module
+import {
+  Toast,
+  AlertNotificationRoot,
+  ALERT_TYPE,
+} from "react-native-alert-notification"; // Import alert notification module
 import ArButton from "../../components/Button";
 
 const { width } = Dimensions.get("window");
@@ -125,16 +129,18 @@ export default function UserLogin({ navigation }) {
     // Using react-native-alert-notification to display custom notifications
     if (type === "success") {
       Toast.show({
+        type: ALERT_TYPE.SUCCESS,
         title: "Success!",
-        description: msg,
+        textBody: msg,
         backgroundColor: "#34C759", // Green background for success
         textColor: "#ffffff", // White text color
         duration: 4000, // Display for 4 seconds
       });
     } else {
       Toast.show({
+        type: ALERT_TYPE.DANGER,
         title: "Error!",
-        description: msg,
+        textBody: msg,
         backgroundColor: "#FF3B30", // Red background for error
         textColor: "#ffffff", // White text color
         duration: 4000, // Display for 4 seconds
@@ -212,13 +218,6 @@ export default function UserLogin({ navigation }) {
           style={tw`flex flex-col h-[80%] justify-evenly bg-gray-200 w-full rounded-t-[50px] p-10 elevation-20`}
         >
           <View style={tw`flex `}>
-            <ArButton
-              onPress={() =>
-                showToasts("success", "Verification mail has been sent!")
-              }
-            >
-              asd
-            </ArButton>
             <View style={tw`flex flex-row gap-2`}>
               <Text style={tw`font-semibold italic text-2xl mb-2`}>
                 Welcome to
