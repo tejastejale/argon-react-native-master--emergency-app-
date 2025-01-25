@@ -54,7 +54,6 @@ export default function App() {
   useEffect(() => {
     const handleLink = (e) => {
       let data = Linking.parse(e.url);
-      console.log(data, "data");
     };
     Linking.addEventListener("url", handleLink);
   }, []);

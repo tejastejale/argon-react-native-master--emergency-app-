@@ -117,12 +117,7 @@ export default function DriverLogin({ navigation }) {
             });
           });
         }
-
-        console.log(formData);
-        console.log(Data);
-
         const res = await driverRegister(formData);
-        console.log(res);
         setLoading(false);
 
         if (res.data?.code) {
