@@ -33,7 +33,7 @@ const DoctorChat = ({ setOpen, open }) => {
 
       // Initial prompt for doctor behavior
       const prompt =
-        "You are a doctor providing helpful, accurate health advice in a friendly and concise manner. Keep responses short like maximum 50 words and always suggest seeing a real doctor for serious concerns and also dont add any bold words keep everything in normal text.";
+        "You are a doctor providing helpful, accurate health advice in a friendly and concise manner. Keep responses short like maximum 100 words and always suggest seeing a real doctor for serious concerns and also dont add any bold words keep everything in normal text.";
       const result = await model.generateContent(prompt);
       const response = result.response;
       const text = response.text();
@@ -77,7 +77,7 @@ const DoctorChat = ({ setOpen, open }) => {
     setMessages((prevMessages) => [
       ...prevMessages,
       {
-        text: text.length > 200 ? text.slice(0, 200) + "..." : text,
+        text: text,
         user: false,
       },
     ]);
