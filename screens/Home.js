@@ -10,7 +10,12 @@ import {
   BackHandler,
 } from "react-native";
 import { Block, Text } from "galio-framework";
-import Mapbox, { Camera, MapView, PointAnnotation } from "@rnmapbox/maps";
+import Mapbox, {
+  Camera,
+  FillExtrusionLayer,
+  MapView,
+  PointAnnotation,
+} from "@rnmapbox/maps";
 import ambulance from "../assets/imgs/Cars/ambulance.png";
 import fire from "../assets/imgs/Cars/fire.png";
 import police from "../assets/imgs/Cars/police.png";
@@ -90,7 +95,7 @@ const Home = () => {
       } else {
         setIsMapLoading(false);
         setShowMap(false);
-        // alert("You must grant location permission for tracking!");
+        alert("You must grant location permission for tracking!");
       }
     } catch (error) {
       setShowMap(false);
@@ -131,9 +136,17 @@ const Home = () => {
 
   return (
     <Block flex center style={tw`w-full`}>
+      {isMapLoading && (
+        <View
+          style={tw`absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-white/80 z-1`}
+        >
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text style={tw`mt-2 text-base text-black`}>Loading map...</Text>
+        </View>
+      )}
       <TouchableOpacity
         onPress={() => setOpen(!open)}
-        style={tw`absolute z-10 top-0 right-0 bg-purple-600 rounded-full p-5 m-2 py-4.5`}
+        style={tw`z-1000 absolute z-10 top-0 right-0 bg-purple-600 rounded-full p-5 m-2 py-4.5`}
       >
         <FontAwesome6 name="user-doctor" size={20} color="white" />
       </TouchableOpacity>
@@ -142,18 +155,10 @@ const Home = () => {
           <GeminiChat setOpen={setOpen} open={open} />
         </View>
       </Animated.View>
-      {isMapLoading && (
-        <View
-          style={tw`absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-white/80 z-10`}
-        >
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text style={tw`mt-2 text-base text-black`}>Loading map...</Text>
-        </View>
-      )}
       {loc && locData && showMap && (
         <MapView
           style={tw`h-full w-full`}
-          styleURL="mapbox://styles/mapbox/outdoors-v12"
+          styleURL="mapbox://styles/mapbox/navigation-day-v1" // Change to night mode (dark theme)
           zoomEnabled
           rotateEnabled
           onMapIdle={handleMapLoad}
@@ -161,13 +166,70 @@ const Home = () => {
             alert("Something went wrong while loading the map!")
           }
         >
+          {/* 3D Buildings Layer */}
+          {/* <FillExtrusionLayer
+            id="3d-buildings"
+            sourceLayerID="building"
+            style={{
+              fillExtrusionColor: [
+                "interpolate",
+                ["linear"],
+                ["get", "height"],
+                0,
+                "#d6e0f0", // Low buildings: light beige
+                50,
+                "#d6e0f0", // Medium buildings: soft purple
+                100,
+                "#d6e0f0", // Tall buildings: deeper purple
+              ],
+              fillExtrusionHeight: [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                15,
+                0,
+                15.05,
+                ["get", "height"],
+              ],
+              fillExtrusionBase: ["get", "min_height"],
+              fillExtrusionOpacity: 0.85,
+            }}
+          /> */}
+
+          {/* 3D Custom Layer for Dynamic Effects */}
+          <FillExtrusionLayer
+            id="3d-dynamic"
+            sourceLayerID="building"
+            style={{
+              fillExtrusionColor: [
+                "case",
+                ["==", ["get", "type"], "skyscraper"],
+                "#ff5722", // Highlight skyscrapers with a bright color
+                "#d6e0f0", // Default color for other buildings
+              ],
+              fillExtrusionHeight: [
+                "interpolate",
+                ["linear"],
+                ["get", "height"],
+                0,
+                0,
+                200,
+                300, // Dynamic height for specific types
+              ],
+              fillExtrusionOpacity: 0.9,
+            }}
+          />
+
+          {/* Camera Settings */}
           <Camera
             centerCoordinate={loc}
-            zoomLevel={15}
+            zoomLevel={16}
             animationMode="none"
             animationDuration={3000}
-            pitch={30}
+            pitch={60} // Gives the map a 3D angle
           />
+
+          {/* Marker for the Current Location */}
           <PointAnnotation id="marker" style={tw`h-10 w-10`} coordinate={loc}>
             <View />
           </PointAnnotation>
@@ -183,6 +245,7 @@ const Home = () => {
         </View>
       )}
       <BottomSheet
+        containerStyle={{ zIndex: 1000 }}
         ref={bottomSheetRef}
         snapPoints={snapPoints}
         enablePanDownToClose={false}
