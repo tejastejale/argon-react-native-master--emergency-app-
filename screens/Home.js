@@ -1,10 +1,13 @@
-import react, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   ActivityIndicator,
   Image,
   ScrollView,
   SafeAreaView,
+  TouchableOpacity,
+  StyleSheet,
+  BackHandler,
 } from "react-native";
 import { Block, Text } from "galio-framework";
 import Mapbox, { Camera, MapView, PointAnnotation } from "@rnmapbox/maps";
@@ -21,6 +24,14 @@ import ArButton from "../components/Button";
 const { height } = Dimensions.get("screen");
 import * as Linking from "expo-linking";
 import { FlatList } from "react-native-gesture-handler";
+import { FontAwesome6 } from "@expo/vector-icons";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+import GeminiChat from "../components/ChatBot";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // For AsyncStorage
 
 Mapbox.setAccessToken(
   "pk.eyJ1IjoidGVqYXNjb2RlNDciLCJhIjoiY200d3pqMGh2MGtldzJwczgwMTZnbHc0dCJ9.KyxtwzKWPT9n1yDElo8HEQ"
@@ -33,11 +44,31 @@ const Home = () => {
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [showMap, setShowMap] = useState(true);
   const [sheetArrow, setSheetArrow] = useState(0);
+
   // Bottom sheet snap points
   const snapPoints = [150, height * 0.5];
 
   useEffect(() => {
     requestPermission();
+
+    const backAction = async () => {
+      const token = await AsyncStorage.getItem("token"); // Get token from AsyncStorage
+      const parsedToken = JSON.parse(token);
+      if (parsedToken.data?.token) {
+        // If token exists, exit the app
+        BackHandler.exitApp();
+        return true; // Prevent default back action
+      } else {
+        return false; // Proceed with default back action
+      }
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // Cleanup the listener on unmount
   }, []);
 
   useEffect(() => {
@@ -76,8 +107,41 @@ const Home = () => {
     Linking.openURL("tel:108");
   };
 
+  const [open, setOpen] = useState(false);
+
+  // Use shared value for open/close state
+  const width = useSharedValue(0); // Start with 0 width
+  const opacity = useSharedValue(0); // Start with 0 opacity
+
+  // When the sidebar is opened or closed, the values are animated
+  if (open) {
+    width.value = withSpring(1, { stiffness: 100, damping: 20 });
+    opacity.value = withSpring(1, { stiffness: 100, damping: 20 });
+  } else {
+    width.value = withSpring(0, { stiffness: 100, damping: 20 });
+    opacity.value = withSpring(0, { stiffness: 100, damping: 20 });
+  }
+
+  const sidebarStyle = useAnimatedStyle(() => {
+    return {
+      width: width.value * 100 + "%", // Cover the full screen width
+      opacity: opacity.value, // Transition opacity
+    };
+  });
+
   return (
     <Block flex center style={tw`w-full`}>
+      <TouchableOpacity
+        onPress={() => setOpen(!open)}
+        style={tw`absolute z-10 top-0 right-0 bg-purple-600 rounded-full p-5 m-2 py-4.5`}
+      >
+        <FontAwesome6 name="user-doctor" size={20} color="white" />
+      </TouchableOpacity>
+      <Animated.View style={[styles.sidebar, sidebarStyle]}>
+        <View style={styles.bg}>
+          <GeminiChat setOpen={setOpen} open={open} />
+        </View>
+      </Animated.View>
       {isMapLoading && (
         <View
           style={tw`absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-white/80 z-10`}
@@ -218,3 +282,31 @@ const Home = () => {
 };
 
 export default Home;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    // backgroundColor: "red",
+  },
+  sidebar: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    // backgroundColor: "red", // Semi-transparent dark background
+    zIndex: 10,
+  },
+  bg: {
+    flex: 1,
+    // backgroundColor: "red", // Your sidebar's background color
+  },
+  toggleButton: {
+    position: "absolute",
+    bottom: 50,
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+  },
+});
