@@ -162,7 +162,7 @@ const Home = () => {
       >
         <FontAwesome6 name="user-doctor" size={20} color="white" />
       </TouchableOpacity>
-      <Animated.View style={[styles.sidebar, sidebarStyle]}>
+      <Animated.View style={[styles.sidebar, sidebarStyle, { zIndex: 1000 }]}>
         <View style={styles.bg}>
           <GeminiChat setOpen={setOpen} open={open} />
         </View>
@@ -258,7 +258,7 @@ const Home = () => {
       )}
       {role === "driver" && (
         <BottomSheet
-          containerStyle={{ zIndex: 1000 }}
+          containerStyle={{ zIndex: 10 }}
           ref={bottomSheetRef}
           snapPoints={snapPoints}
           enablePanDownToClose={false}
@@ -312,7 +312,7 @@ const Home = () => {
       )}
       {role === "customer" && (
         <BottomSheet
-          containerStyle={{ zIndex: 1000 }}
+          containerStyle={{ zIndex: 100 }}
           ref={bottomSheetRef}
           snapPoints={snapPoints}
           enablePanDownToClose={false}
