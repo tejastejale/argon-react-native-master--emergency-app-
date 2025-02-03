@@ -22,14 +22,17 @@ import police from "../assets/imgs/Cars/police.png";
 import * as Location from "expo-location";
 import tw from "twrnc";
 import { locationData } from "../constants/contantFunctions/contants";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet, {
+  BottomSheetScrollView,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
 import { Dimensions } from "react-native";
 import { Icon } from "../components";
 import ArButton from "../components/Button";
 const { height } = Dimensions.get("screen");
 import * as Linking from "expo-linking";
 import { FlatList } from "react-native-gesture-handler";
-import { FontAwesome6 } from "@expo/vector-icons";
+import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -49,9 +52,18 @@ const Home = () => {
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [showMap, setShowMap] = useState(true);
   const [sheetArrow, setSheetArrow] = useState(0);
-
+  const [role, setRole] = useState("");
   // Bottom sheet snap points
   const snapPoints = [150, height * 0.5];
+
+  useEffect(() => {
+    const getRole = async () => {
+      const token = await AsyncStorage.getItem("token"); // Get token from AsyncStorage
+      const parsedToken = JSON.parse(token);
+      setRole(parsedToken.data?.profile?.user_type);
+    };
+    getRole();
+  }, []);
 
   useEffect(() => {
     requestPermission();
@@ -244,102 +256,154 @@ const Home = () => {
           </Text>
         </View>
       )}
-      <BottomSheet
-        containerStyle={{ zIndex: 1000 }}
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        enablePanDownToClose={false}
-        onChange={(e) => setSheetArrow(e)}
-        backgroundStyle={tw`bg-gray-100 rounded-t-3xl`}
-        handleIndicatorStyle={tw`hidden`}
-        handleComponent={() => (
-          <View style={tw`items-center my-2`}>
-            <Icon
-              name={sheetArrow === 0 ? "chevron-up" : "chevron-down"}
-              size={30}
-              family="entypo"
-              style={tw`text-gray-500`}
-            />
-          </View>
-        )}
-      >
-        <BottomSheetView style={tw`flex-1 px-4`}>
-          <ScrollView
-            style={tw`flex-1`}
-            contentContainerStyle={tw`pb-10`}
-            nestedScrollEnabled={true}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Call Section */}
-            <View
-              onTouchStart={call}
-              style={tw`bg-white active:bg-red-400 p-3 py-1 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-between items-center`}
+      {role === "driver" && (
+        <BottomSheet
+          containerStyle={{ zIndex: 1000 }}
+          ref={bottomSheetRef}
+          snapPoints={snapPoints}
+          enablePanDownToClose={false}
+          onChange={(e) => setSheetArrow(e)}
+          backgroundStyle={tw`bg-gray-100 rounded-t-3xl`}
+          handleIndicatorStyle={tw`hidden`}
+          handleComponent={() => (
+            <View style={tw`items-center my-2`}>
+              <Icon
+                name={sheetArrow === 0 ? "chevron-up" : "chevron-down"}
+                size={30}
+                family="entypo"
+                style={tw`text-gray-500`}
+              />
+            </View>
+          )}
+        >
+          <BottomSheetView style={tw`flex-1 px-4`}>
+            <BottomSheetScrollView
+              style={tw`flex-1`}
+              contentContainerStyle={tw`pb-10`}
+              nestedScrollEnabled={true}
+              showsVerticalScrollIndicator={false}
             >
-              <View style={tw`flex flex-row items-center gap-2 py-2`}>
-                <View>
-                  <Icon
-                    name="phone"
-                    family="FontAwesome"
-                    size={40}
-                    style={tw`text-green-500 mr-1`}
-                  />
+              <View
+                style={tw`bg-white active:bg-red-400 p-3 py-1 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-between items-center`}
+              >
+                <View style={tw`flex flex-row items-center gap-2 py-2`}>
+                  <View>
+                    <FontAwesome
+                      name="map-marker"
+                      size={40}
+                      style={tw`text-red-500 mr-2`}
+                    />
+                  </View>
+                  <View style={tw`flex`}>
+                    <Text style={tw`text-lg font-bold`}>Name</Text>
+                    <Text style={tw`text-sm text-gray-500`}>Number</Text>
+                  </View>
                 </View>
-                <View style={tw`flex`}>
-                  <Text style={tw`text-lg font-bold`}>Call 108</Text>
-                  <Text style={tw`text-sm text-gray-500`}>
-                    Call directly to emergency helpline
-                  </Text>
+                <Icon
+                  name="phone"
+                  family="FontAwesome"
+                  size={40}
+                  style={tw`text-green-500 mr-1`}
+                />
+              </View>
+            </BottomSheetScrollView>
+          </BottomSheetView>
+        </BottomSheet>
+      )}
+      {role === "customer" && (
+        <BottomSheet
+          containerStyle={{ zIndex: 1000 }}
+          ref={bottomSheetRef}
+          snapPoints={snapPoints}
+          enablePanDownToClose={false}
+          onChange={(e) => setSheetArrow(e)}
+          backgroundStyle={tw`bg-gray-100 rounded-t-3xl`}
+          handleIndicatorStyle={tw`hidden`}
+          handleComponent={() => (
+            <View style={tw`items-center my-2`}>
+              <Icon
+                name={sheetArrow === 0 ? "chevron-up" : "chevron-down"}
+                size={30}
+                family="entypo"
+                style={tw`text-gray-500`}
+              />
+            </View>
+          )}
+        >
+          <BottomSheetView style={tw`flex-1 px-4`}>
+            <ScrollView
+              style={tw`flex-1`}
+              contentContainerStyle={tw`pb-10`}
+              nestedScrollEnabled={true}
+              showsVerticalScrollIndicator={false}
+            >
+              <View
+                onTouchStart={call}
+                style={tw`bg-white active:bg-red-400 p-3 py-1 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-between items-center`}
+              >
+                <View style={tw`flex flex-row items-center gap-2 py-2`}>
+                  <View>
+                    <Icon
+                      name="phone"
+                      family="FontAwesome"
+                      size={40}
+                      style={tw`text-green-500 mr-1`}
+                    />
+                  </View>
+                  <View style={tw`flex`}>
+                    <Text style={tw`text-lg font-bold`}>Call 108</Text>
+                    <Text style={tw`text-sm text-gray-500`}>
+                      Call directly to emergency helpline
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            {/* Ambulance Section */}
-            <View
-              style={tw`bg-white p-3 py-1 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-between items-center`}
-            >
-              <View style={tw`flex flex-row items-center`}>
-                <Image source={ambulance} style={tw`w-16 h-20 mr-5`} />
-                <View style={tw`flex`}>
-                  <Text style={tw`text-lg font-bold`}>Ambulance</Text>
-                  <Text style={tw`text-sm text-gray-500`}>
-                    Notify nearest ambulances
-                  </Text>
+              <View
+                style={tw`bg-white p-3 py-1 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-between items-center`}
+              >
+                <View style={tw`flex flex-row items-center`}>
+                  <Image source={ambulance} style={tw`w-16 h-20 mr-5`} />
+                  <View style={tw`flex`}>
+                    <Text style={tw`text-lg font-bold`}>Ambulance</Text>
+                    <Text style={tw`text-sm text-gray-500`}>
+                      Notify nearest ambulances
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            {/* Fire Brigade Section */}
-            <View
-              style={tw`bg-white p-3 rounded-lg mb-3 h-fit shadow-md flex flex-row justify-between items-center`}
-            >
-              <View style={tw`flex flex-row items-center`}>
-                <Image source={fire} style={tw`w-16 h-16 mr-5`} />
-                <View style={tw`flex`}>
-                  <Text style={tw`text-lg font-bold`}>Fire Brigade</Text>
-                  <Text style={tw`text-sm text-gray-500`}>
-                    Notify nearest fire brigade
-                  </Text>
+              <View
+                style={tw`bg-white p-3 rounded-lg mb-3 h-fit shadow-md flex flex-row justify-between items-center`}
+              >
+                <View style={tw`flex flex-row items-center`}>
+                  <Image source={fire} style={tw`w-16 h-16 mr-5`} />
+                  <View style={tw`flex`}>
+                    <Text style={tw`text-lg font-bold`}>Fire Brigade</Text>
+                    <Text style={tw`text-sm text-gray-500`}>
+                      Notify nearest fire brigade
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            {/* Police Section */}
-            <View
-              style={tw`bg-white p-3 rounded-lg h-fit shadow-md flex flex-row justify-between items-center`}
-            >
-              <View style={tw`flex flex-row items-center`}>
-                <Image source={police} style={tw`w-14 h-16 mr-5`} />
-                <View style={tw`flex`}>
-                  <Text style={tw`text-lg font-bold`}>Police</Text>
-                  <Text style={tw`text-sm text-gray-500`}>
-                    Notify nearest police
-                  </Text>
+              <View
+                style={tw`bg-white p-3 rounded-lg h-fit shadow-md flex flex-row justify-between items-center`}
+              >
+                <View style={tw`flex flex-row items-center`}>
+                  <Image source={police} style={tw`w-14 h-16 mr-5`} />
+                  <View style={tw`flex`}>
+                    <Text style={tw`text-lg font-bold`}>Police</Text>
+                    <Text style={tw`text-sm text-gray-500`}>
+                      Notify nearest police
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </ScrollView>
-        </BottomSheetView>
-      </BottomSheet>
+            </ScrollView>
+          </BottomSheetView>
+        </BottomSheet>
+      )}
     </Block>
   );
 };
