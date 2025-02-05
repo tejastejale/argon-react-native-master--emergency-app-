@@ -340,7 +340,7 @@ export default function DriverLogin({ navigation }) {
             </View>
 
             <View style={tw`mb-3`}>
-              <Text style={tw`mb-1`}>Car Photos *</Text>
+              <Text style={tw`mb-1`}>vehicle Photos *</Text>
               {Data.carPhoto && (
                 <ScrollView horizontal style={tw`mb-2`}>
                   {Data.carPhoto.map((uri, index) => (

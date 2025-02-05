@@ -1,4 +1,4 @@
-export const BASE = "http://emergencyappapi.pythonanywhere.com";
+export const BASE = "http://13.60.188.43";
 
 export const LOGIN = `${BASE}/auth-api/login/`;
 

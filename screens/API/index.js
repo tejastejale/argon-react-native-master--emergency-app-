@@ -16,7 +16,7 @@ const API = axios.create({
 API.interceptors.request.use(async (req) => {
   const token = await AsyncStorage.getItem("token");
   const parsedToken = JSON.parse(token);
-  if (parsedToken.data?.token) {
+  if (parsedToken?.data?.token) {
     req.headers.Authorization = `Token ${parsedToken.data.token}`;
   }
   return req;

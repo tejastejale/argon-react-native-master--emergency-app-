@@ -168,7 +168,7 @@ export default function UserLogin({ navigation }) {
         showToasts("error", showError(res));
       }
     } catch (error) {
-      showToasts("error", "showError(error)");
+      showToasts("error", "Something went wrong");
     } finally {
       setIsLoading(false);
     }
