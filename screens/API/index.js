@@ -4,6 +4,7 @@ import {
   DRIVER_REGISTER,
   LOGIN,
   LOGOUT,
+  REQUEST_CAR,
   USER_REGISTER,
 } from "./constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -37,3 +38,5 @@ export const driver_register = (body) => {
 };
 
 export const logout = () => API.post(`${LOGOUT}`);
+
+export const request_car = (body) => API.post(`${REQUEST_CAR}`, body);

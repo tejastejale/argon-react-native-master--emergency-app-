@@ -28,10 +28,8 @@ import BottomSheet, {
 } from "@gorhom/bottom-sheet";
 import { Dimensions } from "react-native";
 import { Icon } from "../components";
-import ArButton from "../components/Button";
 const { height } = Dimensions.get("screen");
 import * as Linking from "expo-linking";
-import { FlatList } from "react-native-gesture-handler";
 import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
@@ -40,6 +38,9 @@ import Animated, {
 } from "react-native-reanimated";
 import GeminiChat from "../components/ChatBot";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // For AsyncStorage
+import { useWebSocket } from "./socket";
+import { requestCar } from "./API/actions/request";
+import RadarPing from "./Widget/temp";
 
 Mapbox.setAccessToken(
   "pk.eyJ1IjoidGVqYXNjb2RlNDciLCJhIjoiY200d3pqMGh2MGtldzJwczgwMTZnbHc0dCJ9.KyxtwzKWPT9n1yDElo8HEQ"
@@ -55,6 +56,54 @@ const Home = () => {
   const [role, setRole] = useState("");
   // Bottom sheet snap points
   const snapPoints = [150, height * 0.5];
+  const [open, setOpen] = useState(false);
+  const [isRequested, setIsRequested] = useState("");
+
+  const width = useSharedValue(0); // Start with 0 width
+  const opacity = useSharedValue(0); // Start with 0 opacity
+  const translateX = useSharedValue(0);
+  // const { sendLocation } = useWebSocket(loc);
+
+  // When the sidebar is opened or closed, the values are animated
+  if (open) {
+    width.value = withSpring(1, { stiffness: 100, damping: 20 });
+    opacity.value = withSpring(1, { stiffness: 100, damping: 20 });
+  } else {
+    width.value = withSpring(0, { stiffness: 100, damping: 20 });
+    opacity.value = withSpring(0, { stiffness: 100, damping: 20 });
+  }
+
+  useEffect(() => {
+    const saveToLocal = async () => {
+      if (isRequested)
+        try {
+          await AsyncStorage.setItem(
+            "isRequested",
+            JSON.stringify(isRequested)
+          );
+        } catch (error) {
+          console.error("Error saving isRequested:", error);
+        }
+    };
+
+    saveToLocal();
+  }, [isRequested]);
+
+  useEffect(() => {
+    const loadFromLocal = async () => {
+      try {
+        const res = await AsyncStorage.getItem("isRequested");
+        console.log(res);
+        if (res !== null) {
+          setIsRequested(JSON.parse(res));
+        }
+      } catch (error) {
+        console.error("Error loading isRequested:", error);
+      }
+    };
+
+    loadFromLocal();
+  }, []);
 
   useEffect(() => {
     const getRole = async () => {
@@ -124,27 +173,36 @@ const Home = () => {
     Linking.openURL("tel:108");
   };
 
-  const [open, setOpen] = useState(false);
-
-  // Use shared value for open/close state
-  const width = useSharedValue(0); // Start with 0 width
-  const opacity = useSharedValue(0); // Start with 0 opacity
-
-  // When the sidebar is opened or closed, the values are animated
-  if (open) {
-    width.value = withSpring(1, { stiffness: 100, damping: 20 });
-    opacity.value = withSpring(1, { stiffness: 100, damping: 20 });
-  } else {
-    width.value = withSpring(0, { stiffness: 100, damping: 20 });
-    opacity.value = withSpring(0, { stiffness: 100, damping: 20 });
-  }
-
   const sidebarStyle = useAnimatedStyle(() => {
     return {
       width: width.value * 100 + "%", // Cover the full screen width
       opacity: opacity.value, // Transition opacity
     };
   });
+
+  const handleRequest = async (type) => {
+    let body;
+    if (loc[0] && loc[1])
+      body = {
+        request_type: JSON.stringify(type),
+        latitude: JSON.stringify(loc[0]),
+        longitude: JSON.stringify(loc[1]),
+        additional_details: "",
+      };
+    else {
+      alert("Could not get your location right now!");
+      return;
+    }
+    try {
+      const res = await requestCar(body);
+      if (res?.code === 201) {
+        setIsRequested(true);
+      } else alert("Something went wrong!");
+    } catch (error) {
+      alert("Something went wrong!");
+      console.log(error);
+    }
+  };
 
   return (
     <Block flex center style={tw`w-full`}>
@@ -158,7 +216,7 @@ const Home = () => {
       )}
       <TouchableOpacity
         onPress={() => setOpen(!open)}
-        style={tw`z-1000 absolute z-10 top-0 right-0 bg-purple-600 rounded-full p-5 m-2 py-4.5`}
+        style={tw`z-1000 absolute z-10 top-0 right-0 bg-violet-600 rounded-full p-5 m-2 py-4.5`}
       >
         <FontAwesome6 name="user-doctor" size={20} color="white" />
       </TouchableOpacity>
@@ -225,10 +283,10 @@ const Home = () => {
                 ["get", "height"],
                 0,
                 0,
-                200,
-                300, // Dynamic height for specific types
+                150,
+                500, // Dynamic height for specific types
               ],
-              fillExtrusionOpacity: 0.9,
+              fillExtrusionOpacity: 0.5,
             }}
           />
 
@@ -314,6 +372,7 @@ const Home = () => {
         <BottomSheet
           containerStyle={{ zIndex: 100 }}
           ref={bottomSheetRef}
+          enableDynamicSizing
           snapPoints={snapPoints}
           enablePanDownToClose={false}
           onChange={(e) => setSheetArrow(e)}
@@ -330,78 +389,135 @@ const Home = () => {
             </View>
           )}
         >
-          <BottomSheetView style={tw`flex-1 px-4`}>
-            <ScrollView
-              style={tw`flex-1`}
-              contentContainerStyle={tw`pb-10`}
-              nestedScrollEnabled={true}
-              showsVerticalScrollIndicator={false}
-            >
-              <View
-                onTouchStart={call}
-                style={tw`bg-white active:bg-red-400 p-3 py-1 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-between items-center`}
+          {isRequested ? (
+            <BottomSheetView style={tw`flex-1 px-4`}>
+              <ScrollView
+                style={tw`flex-1`}
+                contentContainerStyle={tw`pb-10`}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={false}
               >
-                <View style={tw`flex flex-row items-center gap-2 py-2`}>
-                  <View>
-                    <Icon
-                      name="phone"
-                      family="FontAwesome"
-                      size={40}
-                      style={tw`text-green-500 mr-1`}
-                    />
-                  </View>
-                  <View style={tw`flex`}>
-                    <Text style={tw`text-lg font-bold`}>Call 108</Text>
-                    <Text style={tw`text-sm text-gray-500`}>
-                      Call directly to emergency helpline
-                    </Text>
+                <Text style={tw`text-lg font-medium text-center mb-2`}>
+                  Finding the nearest driver
+                </Text>
+                <View
+                  style={tw`bg-white active:bg-red-400 p-3 py-2 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-center items-center overflow-hidden`}
+                >
+                  <View style={tw`flex flex-row justify-between items-center`}>
+                    <View style={tw`w-1/3 bg-violet-600 h-[2px]`} />
+                    <RadarPing />
+                    <View style={tw`w-1/3 bg-violet-600 h-[2px]`} />
                   </View>
                 </View>
-              </View>
+                <View style={tw`flex gap-3 text-md`}>
+                  <View
+                    style={tw`bg-white p-3 rounded-lg h-fit shadow-md flex flex-row justify-between items-center`}
+                  >
+                    <View style={tw`flex flex-row items-center`}>
+                      <View style={tw`flex`}>
+                        <Text style={tw`text-lg font-bold`}>
+                          How this works
+                        </Text>
+                        <Text style={tw`text-sm text-gray-500`}>
+                          This sends your request to all the available drivers
+                          and when they accept the request you both can be with
+                          each other as soon as possible
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View
+                    style={tw`bg-white p-3 rounded-lg mb-3 h-fit shadow-md flex flex-row justify-between items-center`}
+                  >
+                    <View style={tw`flex flex-row items-center`}>
+                      <View style={tw`flex`}>
+                        <Text style={tw`text-lg font-bold`}>Note</Text>
+                        <Text style={tw`text-sm text-gray-500`}>
+                          We don't know how much time this could take
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </ScrollView>
+            </BottomSheetView>
+          ) : (
+            <BottomSheetView style={tw`flex-1 px-4`}>
+              <ScrollView
+                style={tw`flex-1`}
+                contentContainerStyle={tw`pb-10`}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={false}
+              >
+                <View
+                  onTouchStart={call}
+                  style={tw`bg-white active:bg-red-400 p-3 py-1 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-between items-center`}
+                >
+                  <View style={tw`flex flex-row items-center gap-2 py-2`}>
+                    <View>
+                      <Icon
+                        name="phone"
+                        family="FontAwesome"
+                        size={40}
+                        style={tw`text-green-500 mr-1`}
+                      />
+                    </View>
+                    <View style={tw`flex`}>
+                      <Text style={tw`text-lg font-bold`}>Call 108</Text>
+                      <Text style={tw`text-sm text-gray-500`}>
+                        Call directly to emergency helpline
+                      </Text>
+                    </View>
+                  </View>
+                </View>
 
-              <View
-                style={tw`bg-white p-3 py-1 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-between items-center`}
-              >
-                <View style={tw`flex flex-row items-center`}>
-                  <Image source={ambulance} style={tw`w-16 h-20 mr-5`} />
-                  <View style={tw`flex`}>
-                    <Text style={tw`text-lg font-bold`}>Ambulance</Text>
-                    <Text style={tw`text-sm text-gray-500`}>
-                      Notify nearest ambulances
-                    </Text>
+                <View
+                  onTouchStart={() => handleRequest(0)}
+                  style={tw`bg-white p-3 py-1 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-between items-center`}
+                >
+                  <View style={tw`flex flex-row items-center`}>
+                    <Image source={ambulance} style={tw`w-16 h-20 mr-5`} />
+                    <View style={tw`flex`}>
+                      <Text style={tw`text-lg font-bold`}>Ambulance</Text>
+                      <Text style={tw`text-sm text-gray-500`}>
+                        Notify nearest ambulances
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
 
-              <View
-                style={tw`bg-white p-3 rounded-lg mb-3 h-fit shadow-md flex flex-row justify-between items-center`}
-              >
-                <View style={tw`flex flex-row items-center`}>
-                  <Image source={fire} style={tw`w-16 h-16 mr-5`} />
-                  <View style={tw`flex`}>
-                    <Text style={tw`text-lg font-bold`}>Fire Brigade</Text>
-                    <Text style={tw`text-sm text-gray-500`}>
-                      Notify nearest fire brigade
-                    </Text>
+                <View
+                  onTouchStart={() => handleRequest(2)}
+                  style={tw`bg-white p-3 rounded-lg mb-3 h-fit shadow-md flex flex-row justify-between items-center`}
+                >
+                  <View style={tw`flex flex-row items-center`}>
+                    <Image source={fire} style={tw`w-16 h-16 mr-5`} />
+                    <View style={tw`flex`}>
+                      <Text style={tw`text-lg font-bold`}>Fire Brigade</Text>
+                      <Text style={tw`text-sm text-gray-500`}>
+                        Notify nearest fire brigade
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
 
-              <View
-                style={tw`bg-white p-3 rounded-lg h-fit shadow-md flex flex-row justify-between items-center`}
-              >
-                <View style={tw`flex flex-row items-center`}>
-                  <Image source={police} style={tw`w-14 h-16 mr-5`} />
-                  <View style={tw`flex`}>
-                    <Text style={tw`text-lg font-bold`}>Police</Text>
-                    <Text style={tw`text-sm text-gray-500`}>
-                      Notify nearest police
-                    </Text>
+                <View
+                  onTouchStart={() => handleRequest(1)}
+                  style={tw`bg-white p-3 rounded-lg h-fit shadow-md flex flex-row justify-between items-center`}
+                >
+                  <View style={tw`flex flex-row items-center`}>
+                    <Image source={police} style={tw`w-14 h-16 mr-5`} />
+                    <View style={tw`flex`}>
+                      <Text style={tw`text-lg font-bold`}>Police</Text>
+                      <Text style={tw`text-sm text-gray-500`}>
+                        Notify nearest police
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </ScrollView>
-          </BottomSheetView>
+              </ScrollView>
+            </BottomSheetView>
+          )}
         </BottomSheet>
       )}
     </Block>
