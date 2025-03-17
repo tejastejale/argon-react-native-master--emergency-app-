@@ -8,3 +8,12 @@ export const requestCar = async (body) => {
     return error;
   }
 };
+
+export const acceptRequest = async (id) => {
+  try {
+    const res = await API.accept_request(id);
+    return res.data;
+  } catch (error) {
+    return error;
+  }
+};

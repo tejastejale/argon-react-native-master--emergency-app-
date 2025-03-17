@@ -11,7 +11,6 @@ const { width } = Dimensions.get("window");
 export default function MainScreen({ navigation }) {
   const animatedValue = useRef(new Animated.Value(-500)).current;
   const animatedValue2 = useRef(new Animated.Value(300)).current;
-
   const carouselData = [
     {
       id: 1,

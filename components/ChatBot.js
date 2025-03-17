@@ -24,16 +24,16 @@ const DoctorChat = ({ setOpen, open }) => {
   const [showStopIcon, setShowStopIcon] = useState(false);
   const [isTyping, setIsTyping] = useState(false); // State for typing indicator
 
-  const API_KEY = "AIzaSyA4eGWxAnmq4oe8UMKKawBJBRfzS5xMPDc";
+  const API_KEY = "AIzaSyDSXcbKdICgrc6kfNeU187WgIibOF_Wrbo";
 
   useEffect(() => {
     const startChat = async () => {
       const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
       // Initial prompt for doctor behavior
       const prompt =
-        "You are a doctor providing helpful, accurate health advice in a friendly and concise manner. Keep responses short like maximum 100 words and always suggest seeing a real doctor for serious concerns and also dont add any bold words keep everything in normal text.";
+        "You are a indian doctor providing helpful, accurate health advice in a friendly and concise manner. Keep responses short like maximum 100 words and always suggest seeing a real doctor for serious concerns and also dont add any bold words keep everything in normal text.";
       const result = await model.generateContent(prompt);
       const response = result.response;
       const text = response.text();
@@ -67,10 +67,10 @@ const DoctorChat = ({ setOpen, open }) => {
     setMessages([...messages, userMessage]);
 
     const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // Send query as a medical question, ensuring concise responses
-    const prompt = `You are a doctor providing helpful, accurate health advice. Respond briefly and concisely to this query: "${userMessage.text}"`;
+    const prompt = `You are a indian doctor providing helpful, accurate health advice. Respond briefly and concisely to this query: "${userMessage.text}"`;
     const result = await model.generateContent(prompt);
     const response = result.response;
     const text = response.text();

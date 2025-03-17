@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const useWebSocket = (loc) => {
+export const useWebSocket = (loc, setSocketData) => {
   const socketRef = useRef(null);
   const [socketUrl, setSocketUrl] = useState(null);
 
@@ -42,6 +42,16 @@ export const useWebSocket = (loc) => {
 
       socketRef.current.onmessage = (event) => {
         console.log("Received:", event.data);
+        if (typeof event.data === "string") {
+          const parsedData = JSON.parse(event.data);
+          if ("driver" in parsedData) {
+            setSocketData(parsedData);
+          } else if (parsedData?.id)
+            setSocketData((prevData) => {
+              if (!Array.isArray(prevData)) return [parsedData];
+              return [...prevData, parsedData];
+            });
+        }
       };
 
       socketRef.current.onerror = (error) => {

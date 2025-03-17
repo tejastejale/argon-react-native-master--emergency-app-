@@ -1,5 +1,6 @@
 import axios from "axios";
 import {
+  ACCEPT_REQUEST,
   BASE,
   DRIVER_REGISTER,
   LOGIN,
@@ -40,3 +41,5 @@ export const driver_register = (body) => {
 export const logout = () => API.post(`${LOGOUT}`);
 
 export const request_car = (body) => API.post(`${REQUEST_CAR}`, body);
+
+export const accept_request = (id) => API.post(`${ACCEPT_REQUEST}/${id}/`);

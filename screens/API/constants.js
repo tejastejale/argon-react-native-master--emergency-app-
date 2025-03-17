@@ -11,3 +11,5 @@ export const DRIVER_REGISTER = `${BASE}/auth-api/driver/register/`;
 export const WEB_SOCKET = `ws://13.60.188.43/ws/user`;
 
 export const REQUEST_CAR = `${BASE}/request-api/request-car/`;
+
+export const ACCEPT_REQUEST = `${BASE}/request-api/accept-request`;

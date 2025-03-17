@@ -4,7 +4,7 @@ export const url = (lat, long) => {
 };
 
 export const locationData = async (loc) => {
-  const res = fetch(url(loc[0], loc[1]))
+  const res = await fetch(url(loc[0], loc[1]))
     .then((res) => res.json())
     .then((data) => {
       return data;
