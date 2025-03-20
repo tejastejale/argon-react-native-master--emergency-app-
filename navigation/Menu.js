@@ -4,6 +4,7 @@ import { DrawerItem as DrawerCustomItem } from "../components";
 import Images from "../constants/Images";
 import React from "react";
 import tw from "twrnc";
+import { useRoute } from "@react-navigation/native";
 
 function CustomDrawerContent({
   drawerPosition,
@@ -13,14 +14,18 @@ function CustomDrawerContent({
   state,
   ...rest
 }) {
+  const route = state?.routes[state.index]?.name;
   const screens = ["Home", "Profile"];
+
   return (
     <Block
       style={styles.container}
       forceInset={{ top: "always", horizontal: "never" }}
     >
       <Block flex={0.06} style={styles.header}>
-        <Text style={tw`text-red-400 italic tracking-widest	font-bold`}>
+        <Text
+          style={tw`text-red-400 italic tracking-widest	font-bold text-2xl -ml-4`}
+        >
           Rapid Rescue
         </Text>
         {/* <Image styles={styles.logo} source={Images.Logo} /> */}
@@ -28,12 +33,13 @@ function CustomDrawerContent({
       <Block flex style={{ paddingLeft: 8, paddingRight: 14 }}>
         <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
           {screens.map((item, index) => {
+            // console.log(state.index, index);
             return (
               <DrawerCustomItem
                 title={item}
                 key={index}
                 navigation={navigation}
-                // focused={state.index === index ? true : false}
+                focused={route === item}
               />
             );
           })}

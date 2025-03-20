@@ -2,10 +2,12 @@ import axios from "axios";
 import {
   ACCEPT_REQUEST,
   BASE,
+  COMPLETE_REQUEST,
   DRIVER_REGISTER,
   LOGIN,
   LOGOUT,
   REQUEST_CAR,
+  REQUEST_DATA,
   USER_REGISTER,
 } from "./constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -43,3 +45,8 @@ export const logout = () => API.post(`${LOGOUT}`);
 export const request_car = (body) => API.post(`${REQUEST_CAR}`, body);
 
 export const accept_request = (id) => API.post(`${ACCEPT_REQUEST}/${id}/`);
+
+export const request_data = () => API.get(`${REQUEST_DATA}`);
+
+export const complete_request = (id) =>
+  API.post(`${COMPLETE_REQUEST}/${id}/complete/`);

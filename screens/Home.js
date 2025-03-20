@@ -14,8 +14,10 @@ import { Block, Text } from "galio-framework";
 import Mapbox, {
   Camera,
   FillExtrusionLayer,
+  LineLayer,
   MapView,
   PointAnnotation,
+  ShapeSource,
 } from "@rnmapbox/maps";
 import Ambulance from "../assets/imgs/Cars/ambulance.png";
 import fire from "../assets/imgs/Cars/fire.png";
@@ -40,9 +42,16 @@ import Animated, {
 import GeminiChat from "../components/ChatBot";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // For AsyncStorage
 import { useWebSocket } from "./socket";
-import { acceptRequest, requestCar } from "./API/actions/request";
+import {
+  acceptRequest,
+  completeRequest,
+  requestCar,
+  requestData,
+} from "./API/actions/request";
 import RadarPing from "./Widget/temp";
-import pin from "../assets/imgs/pin.png";
+import car from "../assets/imgs/car.png";
+import { BASE } from "./API/constants";
+import userPic from "../assets/imgs/user.png";
 
 Mapbox.setAccessToken(
   "pk.eyJ1IjoidGVqYXNjb2RlNDciLCJhIjoiY200d3pqMGh2MGtldzJwczgwMTZnbHc0dCJ9.KyxtwzKWPT9n1yDElo8HEQ"
@@ -58,17 +67,27 @@ const Home = () => {
   const [showMap, setShowMap] = useState(true);
   const [sheetArrow, setSheetArrow] = useState(0);
   const [role, setRole] = useState("");
-  // Bottom sheet snap points
   const snapPoints = [150, height * 0.5];
   const [open, setOpen] = useState(false);
   const [isRequested, setIsRequested] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [selectedData, setSelectedData] = useState(null);
+  const [updatedLocation, setUpdatedLocation] = useState(null);
   const width = useSharedValue(0); // Start with 0 width
   const opacity = useSharedValue(0); // Start with 0 opacity
   const [requestAccepted, setRequestAccepted] = useState("");
+  const [routeDirections, setRouteDirections] = useState(null);
+  const [zoom, setZoom] = useState(16); // Store zoom level
+  const [bearing, setBearing] = useState(0); // Store rotation
+  const [pitch, setPitch] = useState(50); // Store tilt
+  const [orderCompleted, setOrderCompleted] = useState("false");
   const translateX = useSharedValue(0);
-  const { sendLocation } = useWebSocket(loc, setSocketData);
+  const { sendLocation } = useWebSocket(
+    loc,
+    setSocketData,
+    setUpdatedLocation,
+    setOrderCompleted
+  );
 
   // When the sidebar is opened or closed, the values are animated
   if (open) {
@@ -79,9 +98,11 @@ const Home = () => {
     opacity.value = withSpring(0, { stiffness: 100, damping: 20 });
   }
 
-  // useEffect(() => {
-  //   console.log("\n\n\n", socketData);
-  // }, [socketData]);
+  useEffect(() => {
+    if (orderCompleted !== "false") {
+      clear();
+    }
+  }, [orderCompleted]);
 
   useEffect(() => {
     const saveSelectedData = async () => {
@@ -138,14 +159,19 @@ const Home = () => {
 
   useEffect(() => {
     const saveToLocal = async () => {
-      try {
-        if (typeof socketData === "object" && !Array.isArray(socketData)) {
-          console.log("saving this data", socketData);
-          await AsyncStorage.setItem("socketData", JSON.stringify(socketData));
+      if (socketData?.type === "order_completed_event")
+        setOrderCompleted("true");
+      else if (socketData !== null)
+        try {
+          if (typeof socketData === "object" && !Array.isArray(socketData)) {
+            await AsyncStorage.setItem(
+              "socketData",
+              JSON.stringify(socketData)
+            );
+          }
+        } catch (error) {
+          console.error("Error saving socketData:", error);
         }
-      } catch (error) {
-        console.error("Error saving socketData:", error);
-      }
     };
 
     saveToLocal();
@@ -170,7 +196,7 @@ const Home = () => {
         setSelectedData(JSON.parse(selectedDataStr));
 
         const temp = JSON.parse(socketDataStr);
-        if (typeof temp === "object" && !Array.isArray(temp)) {
+        if (typeof temp === "object" && !Array.isArray(temp) && temp !== null) {
           setSocketData(temp);
         }
       } catch (error) {
@@ -223,6 +249,61 @@ const Home = () => {
     getData();
   }, [loc]);
 
+  useEffect(() => {
+    // if (role === "customer") {
+    if (
+      selectedData?.data?.location?.lat &&
+      selectedData?.data?.location?.lon
+    ) {
+      createRoute();
+    }
+    // }
+  }, [socketData, selectedData, loc]);
+
+  useEffect(() => {
+    if (updatedLocation !== null) createRoute();
+  }, [updatedLocation]);
+
+  useEffect(() => {
+    let locationSubscription;
+
+    const startLocationTracking = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          console.error("Location permission not granted");
+          return;
+        }
+
+        locationSubscription = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.Highest,
+            timeInterval: 1000, // Check location every 5 seconds
+            distanceInterval: 10, // Trigger update if moved by 10 meters
+          },
+          (newLocation) => {
+            // console.log("New Location:", newLocation.coords);
+            sendLocation([
+              newLocation.coords.longitude,
+              newLocation.coords.latitude,
+            ]);
+            setLoc([newLocation.coords.longitude, newLocation.coords.latitude]);
+          }
+        );
+      } catch (error) {
+        console.error("Error tracking location:", error);
+      }
+    };
+
+    startLocationTracking();
+
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    };
+  }, []);
+
   const requestPermission = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -272,12 +353,9 @@ const Home = () => {
       alert("Could not get your location right now!");
       return;
     }
-    // let resss = await AsyncStorage.getItem("token");
-    // console.log(JSON.stringify(resss, null, 2));
 
     try {
       const res = await requestCar(body);
-      console.log(JSON.stringify(res, null, 2));
       if (res?.code === 201) {
         setIsRequested(true);
       } else alert("Something went wrong!!");
@@ -342,10 +420,90 @@ const Home = () => {
     }
   };
 
-  // useEffect(() => {
-  //   console.log(selectedData, "=======================");
-  //   console.log(JSON.stringify(selectedData?.data?.location.lat, null, 2));
-  // }, [selectedData]);
+  const makeRouterFeature = (loc) => {
+    const route = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "LineString",
+            coordinates: loc,
+          },
+        },
+      ],
+    };
+    return route;
+  };
+
+  const createRoute = async () => {
+    const startCoords = `${loc[0]},${loc[1]}`;
+    let endCoords;
+    if (selectedData)
+      endCoords = `${selectedData.data.location.lon},${selectedData.data.location.lat}`;
+    else
+      endCoords = `${updatedLocation?.longitude},${updatedLocation?.latitude}`;
+
+    const geometries = "geojson";
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${startCoords};${endCoords}?alternatives=true&geometries=${geometries}&steps=true&banner_instructions=true&overview=full&voice_instructions=true&access_token=pk.eyJ1IjoidGVqYXNjb2RlNDciLCJhIjoiY200d3pqMGh2MGtldzJwczgwMTZnbHc0dCJ9.KyxtwzKWPT9n1yDElo8HEQ`;
+
+    try {
+      let res = await fetch(url);
+      let json = await res.json();
+
+      // console.log("Mapbox API Response:", json);
+
+      // Ensure routes exist
+      if (!json.routes || json.routes.length === 0) {
+        console.log("No routes found in response!", json);
+        return;
+      }
+
+      // Extract coordinates
+      let coordinates = json.routes[0]?.geometry?.coordinates;
+      if (coordinates?.length) {
+        // console.log("Route Coordinates:", coordinates);
+        const routerFeature = makeRouterFeature([...coordinates]);
+        setRouteDirections(routerFeature);
+      } else {
+        console.error("No coordinates found in route geometry!");
+      }
+      setPitch(55);
+      if (zoom === 16) setZoom(18);
+    } catch (error) {
+      console.error("Error fetching route:", error);
+    }
+  };
+
+  const clear = async () => {
+    try {
+      await AsyncStorage.removeItem("selectedData");
+      await AsyncStorage.removeItem("requestAccepted");
+      await AsyncStorage.removeItem("isRequested");
+      await AsyncStorage.removeItem("socketData");
+      setSelectedData(null);
+      setRequestAccepted(false);
+      setIsRequested("");
+      setSocketData([]);
+      setUpdatedLocation(null);
+      setRouteDirections(null);
+      setOrderCompleted("false");
+      console.log("=========================");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const callCompleteRequest = async (id) => {
+    try {
+      const res = await completeRequest(id);
+      if (res?.code === 200) clear();
+      else alert("Something went wrong!");
+    } catch (error) {
+      alert("Something went wrong!!");
+    }
+  };
 
   return (
     <Block flex center style={tw`w-full`}>
@@ -382,10 +540,15 @@ const Home = () => {
           styleURL="mapbox://styles/mapbox/navigation-day-v1" // Change to night mode (dark theme)
           zoomEnabled
           rotateEnabled
-          onMapIdle={handleMapLoad}
+          onDidFinishLoadingStyle={handleMapLoad}
           onMapLoadingError={() =>
             alert("Something went wrong while loading the map!")
           }
+          onRegionDidChange={(region) => {
+            setZoom(region.properties.zoom); // Save zoom
+            setBearing(region.properties.bearing); // Save rotation
+            setPitch(region.properties.pitch); // Save tilt
+          }}
         >
           {/* 3D Custom Layer for Dynamic Effects */}
           <FillExtrusionLayer
@@ -410,16 +573,20 @@ const Home = () => {
               fillExtrusionOpacity: 0.5,
             }}
           />
-
           {/* Camera Settings */}
           <Camera
+            // centerCoordinate={loc}
+            // zoomLevel={16}
+            // animationMode="none"
+            // animationDuration={3000}
+            // pitch={60} // Gives the map a 3D angle
             centerCoordinate={loc}
-            zoomLevel={16}
-            animationMode="none"
-            animationDuration={3000}
-            pitch={60} // Gives the map a 3D angle
+            zoomLevel={zoom}
+            pitch={pitch}
+            heading={bearing} // Keeps rotation
+            animationMode="moveTo"
+            animationDuration={2000}
           />
-
           {/* Marker for the Current Location */}
           <PointAnnotation id="marker" style={tw`h-10 w-10`} coordinate={loc}>
             {/* <View /> */}
@@ -436,10 +603,20 @@ const Home = () => {
               </View>
             )}
           </PointAnnotation>
+          {routeDirections && (
+            <ShapeSource id="line1" shape={routeDirections}>
+              <LineLayer
+                id="routerLine01"
+                style={{
+                  lineColor: "#7f22fe",
+                  lineWidth: 10,
+                }}
+              />
+            </ShapeSource>
+          )}
 
           {socketData?.type === "order_accepted_event" &&
             "driver" in socketData && (
-              // console.log(socketData?.location)
               <PointAnnotation
                 id="driver"
                 style={tw`h-10 w-10`}
@@ -451,7 +628,22 @@ const Home = () => {
                 <View />
               </PointAnnotation>
             )}
-          {console.log(selectedData)}
+
+          {updatedLocation?.type === "location_update" && (
+            <PointAnnotation
+              id="driver_update"
+              style={tw`h-10 w-10`}
+              coordinate={[
+                updatedLocation?.longitude,
+                updatedLocation?.latitude,
+              ]}
+            >
+              <View>
+                <Image source={car} style={tw`h-10 w-10`} />
+              </View>
+            </PointAnnotation>
+          )}
+
           {selectedData?.data?.location?.lat &&
             selectedData?.data?.location?.lon && (
               <PointAnnotation
@@ -512,8 +704,7 @@ const Home = () => {
             >
               <TouchableOpacity
                 onPress={() => {
-                  setRequestAccepted(false);
-                  setSelectedData(null);
+                  clear();
                 }}
                 style={tw`bg-violet-600 p-3 py-3 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-center items-center`}
               >
@@ -642,7 +833,6 @@ const Home = () => {
           )}
         </BottomSheet>
       )}
-      {console.log(socketData, "data")}
       {role === "customer" && (
         <BottomSheet
           containerStyle={{ zIndex: 100 }}
@@ -669,24 +859,28 @@ const Home = () => {
               {socketData?.type === "order_accepted_event" &&
               "driver" in socketData ? (
                 <>
-                  <View
-                    style={tw`bg-white p-4 h-fit rounded-lg mb-3 shadow-md flex items-center`}
+                  <TouchableOpacity
+                    onPress={() => callCompleteRequest(socketData?.id)}
+                    style={tw`bg-violet-600 p-3 py-3 h-fit rounded-lg mb-3 shadow-md flex flex-row justify-center items-center`}
                   >
-                    <View
-                      style={tw`w-full flex flex-row justify-between items-center pr-2`}
-                    >
-                      <View style={tw`flex flex-row items-center `}>
-                        <View
-                          style={[
-                            { flexShrink: 1 },
-                            tw`flex w-full overflow-hidden`,
-                          ]}
-                        >
-                          <Text style={tw`text-sm text-gray-500`}>
-                            {socketData?.driver?.name}
-                          </Text>
-                        </View>
-                      </View>
+                    <Text style={tw`text-white`}>Complete Order</Text>
+                  </TouchableOpacity>
+
+                  <View
+                    style={tw`w-full h-18 bg-white rounded-lg shadow-md mb-2`}
+                  >
+                    <View style={tw`flex flex-row items-center gap-2 h-full`}>
+                      <Image
+                        source={
+                          socketData?.driver?.profile_pic
+                            ? {
+                                uri: `${BASE}/${socketData?.driver?.profile_pic}`,
+                              }
+                            : userPic
+                        }
+                        style={tw`h-full w-20 rounded-l-lg`}
+                      />
+                      <Text>{socketData?.driver?.name}</Text>
                     </View>
                   </View>
 

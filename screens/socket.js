@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const useWebSocket = (loc, setSocketData) => {
+export const useWebSocket = (
+  loc,
+  setSocketData,
+  setUpdatedLocation,
+  setOrderCompleted
+) => {
   const socketRef = useRef(null);
   const [socketUrl, setSocketUrl] = useState(null);
 
@@ -31,6 +36,12 @@ export const useWebSocket = (loc, setSocketData) => {
     fetchUserData();
   }, []);
 
+  const role = async () => {
+    const token = await AsyncStorage.getItem("token");
+    const parsedToken = JSON.parse(token);
+    console.log(parsedToken.data?.profile?.user_type);
+  };
+
   useEffect(() => {
     if (socketUrl) {
       console.log("Connecting...");
@@ -41,12 +52,17 @@ export const useWebSocket = (loc, setSocketData) => {
       };
 
       socketRef.current.onmessage = (event) => {
-        console.log("Received:", event.data);
+        // console.log("Received:", JSON.stringify(event.data, null, 2));
+
         if (typeof event.data === "string") {
           const parsedData = JSON.parse(event.data);
-          if ("driver" in parsedData) {
+          if (parsedData?.type === "order_completed_event") {
             setSocketData(parsedData);
-          } else if (parsedData?.id)
+          } else if ("driver" in parsedData) {
+            setSocketData(parsedData);
+          } else if (parsedData?.type === "location_update")
+            setUpdatedLocation(parsedData);
+          else if (parsedData?.id)
             setSocketData((prevData) => {
               if (!Array.isArray(prevData)) return [parsedData];
               return [...prevData, parsedData];
@@ -84,7 +100,7 @@ export const useWebSocket = (loc, setSocketData) => {
         longitude: location[0],
       });
       socketRef.current.send(data);
-      console.log("Sent:", data);
+      // console.log("Sent:", data);
     } else {
       console.log("WebSocket not open, cannot send location");
     }

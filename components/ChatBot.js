@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as GoogleGenerativeAI from "@google/generative-ai";
 import {
   View,
@@ -15,6 +15,7 @@ import { Entypo } from "@expo/vector-icons";
 import FlashMessage, { showMessage } from "react-native-flash-message";
 import tw from "twrnc";
 import { Icon } from "galio-framework";
+import { isLoading } from "expo-font";
 
 const DoctorChat = ({ setOpen, open }) => {
   const [messages, setMessages] = useState([]);
@@ -23,6 +24,7 @@ const DoctorChat = ({ setOpen, open }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showStopIcon, setShowStopIcon] = useState(false);
   const [isTyping, setIsTyping] = useState(false); // State for typing indicator
+  const flatListRef = useRef(null);
 
   const API_KEY = "AIzaSyDSXcbKdICgrc6kfNeU187WgIibOF_Wrbo";
 
@@ -61,38 +63,40 @@ const DoctorChat = ({ setOpen, open }) => {
   }, []);
 
   const sendMessage = async () => {
-    setLoading(true);
-    setIsTyping(true); // Show typing indicator
-    const userMessage = { text: userInput, user: true };
-    setMessages([...messages, userMessage]);
+    if (!loading && userInput !== "") {
+      setLoading(true);
+      setIsTyping(true); // Show typing indicator
+      const userMessage = { text: userInput, user: true };
+      setMessages([...messages, userMessage]);
 
-    const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const genAI = new GoogleGenerativeAI.GoogleGenerativeAI(API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    // Send query as a medical question, ensuring concise responses
-    const prompt = `You are a indian doctor providing helpful, accurate health advice. Respond briefly and concisely to this query: "${userMessage.text}"`;
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      {
-        text: text,
-        user: false,
-      },
-    ]);
-    setLoading(false);
-    setUserInput(""); // Clear the input after sending
-    setIsTyping(false); // Hide typing indicator
+      // Send query as a medical question, ensuring concise responses
+      const prompt = `You are a indian doctor providing helpful, accurate health advice. Respond briefly and concisely to this query: "${userMessage.text}"`;
+      const result = await model.generateContent(prompt);
+      const response = result.response;
+      const text = response.text();
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          text: text,
+          user: false,
+        },
+      ]);
+      setLoading(false);
+      setUserInput(""); // Clear the input after sending
+      setIsTyping(false); // Hide typing indicator
 
-    // Uncomment to enable text-to-speech if needed
-    // if (text) {
-    //   Speech.speak(text);
-    // }
-    if (text && !isSpeaking) {
-      Speech.speak(text);
-      setIsSpeaking(true);
-      setShowStopIcon(true);
+      // Uncomment to enable text-to-speech if needed
+      // if (text) {
+      //   Speech.speak(text);
+      // }
+      if (text && !isSpeaking) {
+        Speech.speak(text);
+        setIsSpeaking(true);
+        setShowStopIcon(true);
+      }
     }
   };
 
@@ -119,9 +123,15 @@ const DoctorChat = ({ setOpen, open }) => {
       </TouchableOpacity>
 
       <FlatList
+        ref={flatListRef} // Attached ref to FlatList
         data={messages}
         renderItem={renderMessage}
         keyExtractor={(item, index) => index.toString()}
+        onContentSizeChange={() =>
+          flatListRef.current?.scrollToEnd({ animated: true })
+        }
+        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        keyboardShouldPersistTaps="handled"
       />
 
       {/* Typing indicator */}
@@ -181,7 +191,6 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 16,
     color: "white",
-    paddingVertical: 5,
   },
   inputContainer: {
     flexDirection: "row",
