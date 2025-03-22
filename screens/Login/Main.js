@@ -33,16 +33,6 @@ export default function MainScreen({ navigation }) {
   ];
 
   useEffect(() => {
-    const checkToken = async () => {
-      const token = await AsyncStorage.getItem("token");
-      let obj = JSON.parse(token);
-      if (obj?.data?.token) {
-        navigation.navigate("Home");
-      }
-    };
-
-    checkToken();
-
     setTimeout(() => {
       Animated.spring(animatedValue2, {
         toValue: 0,

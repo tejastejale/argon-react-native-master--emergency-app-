@@ -7,6 +7,7 @@ import {
   View,
   Dimensions,
   ActivityIndicator,
+  BackHandler,
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import tw from "twrnc";
@@ -51,6 +52,19 @@ export default function UserLogin({ navigation }) {
       tension: 50,
       useNativeDriver: true,
     }).start();
+  }, []);
+
+  useEffect(() => {
+    const backAction = async () => {
+      navigation.navigate("MainScreen");
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // Cleanup the listener on unmount
   }, []);
 
   const handleChange = (name, value) => {

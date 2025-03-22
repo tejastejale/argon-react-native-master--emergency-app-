@@ -58,17 +58,20 @@ Mapbox.setAccessToken(
 );
 
 const Home = () => {
+  const [uiState, setUiState] = useState({
+    visible: false, // Dialog visibility
+    isMapLoading: true, // Map loading indicator
+    showMap: true, // Map visibility
+    sheetArrow: 0, // Bottom sheet arrow direction
+    open: false, // Sidebar open state
+  });
+  const [compassHeading, setCompassHeading] = useState(0);
   const bottomSheetRef = useRef(null);
-  const [visible, setVisible] = useState(false);
   const [socketData, setSocketData] = useState([]);
   const [locData, setLocData] = useState(null);
   const [loc, setLoc] = useState(null);
-  const [isMapLoading, setIsMapLoading] = useState(true);
-  const [showMap, setShowMap] = useState(true);
-  const [sheetArrow, setSheetArrow] = useState(0);
   const [role, setRole] = useState("");
   const snapPoints = [150, height * 0.5];
-  const [open, setOpen] = useState(false);
   const [isRequested, setIsRequested] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [selectedData, setSelectedData] = useState(null);
@@ -76,12 +79,16 @@ const Home = () => {
   const width = useSharedValue(0); // Start with 0 width
   const opacity = useSharedValue(0); // Start with 0 opacity
   const [requestAccepted, setRequestAccepted] = useState("");
-  const [routeDirections, setRouteDirections] = useState(null);
-  const [zoom, setZoom] = useState(16); // Store zoom level
-  const [bearing, setBearing] = useState(0); // Store rotation
-  const [pitch, setPitch] = useState(50); // Store tilt
+  const [routeDirections, setRouteDirections] = useState({
+    routeThings: null,
+    routeTime: {},
+  });
+  const [cameraProps, setCameraProps] = useState({
+    zoom: 35,
+    bearing: 0,
+    pitch: 50,
+  });
   const [orderCompleted, setOrderCompleted] = useState("false");
-  const translateX = useSharedValue(0);
   const { sendLocation } = useWebSocket(
     loc,
     setSocketData,
@@ -90,7 +97,7 @@ const Home = () => {
   );
 
   // When the sidebar is opened or closed, the values are animated
-  if (open) {
+  if (uiState.open) {
     width.value = withSpring(1, { stiffness: 100, damping: 20 });
     opacity.value = withSpring(1, { stiffness: 100, damping: 20 });
   } else {
@@ -266,7 +273,7 @@ const Home = () => {
 
   useEffect(() => {
     let locationSubscription;
-
+    let subscription;
     const startLocationTracking = async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
@@ -274,12 +281,17 @@ const Home = () => {
           console.error("Location permission not granted");
           return;
         }
+        subscription = await Location.watchHeadingAsync((headingData) => {
+          // headingData.trueHeading is the heading relative to true north
+          // headingData.magHeading is the heading relative to magnetic north
+          setCompassHeading(headingData.trueHeading || headingData.magHeading);
+        });
 
         locationSubscription = await Location.watchPositionAsync(
           {
-            accuracy: Location.Accuracy.Highest,
+            accuracy: Location.Accuracy.High,
             timeInterval: 1000, // Check location every 5 seconds
-            distanceInterval: 10, // Trigger update if moved by 10 meters
+            distanceInterval: 100, // Trigger update if moved by 10 meters
           },
           (newLocation) => {
             // console.log("New Location:", newLocation.coords);
@@ -298,6 +310,9 @@ const Home = () => {
     startLocationTracking();
 
     return () => {
+      if (subscription) {
+        subscription.remove();
+      }
       if (locationSubscription) {
         locationSubscription.remove();
       }
@@ -315,18 +330,20 @@ const Home = () => {
         return;
       } else {
         setIsMapLoading(false);
-        setShowMap(false);
+        setUiState((prev) => ({ ...prev, showMap: false }));
+
         alert("You must grant location permission for tracking!");
       }
     } catch (error) {
-      setShowMap(false);
+      setUiState((prev) => ({ ...prev, showMap: false }));
+
       console.error("Error requesting permissions or getting location:", error);
       alert("Error while getting location, please try again later!");
     }
   };
 
   const handleMapLoad = () => {
-    setIsMapLoading(false);
+    setUiState((prev) => ({ ...prev, isMapLoading: false }));
   };
 
   const call = (num) => {
@@ -406,17 +423,17 @@ const Home = () => {
   const showDialog = (data) => {
     setSelectedId(data.id);
     setSelectedData(data);
-    setVisible(true);
+    setUiState((prev) => ({ ...prev, visible: true }));
   };
 
   const handleCancel = () => {
-    setVisible(false);
+    setUiState((prev) => ({ ...prev, visible: false }));
   };
 
   const handleConfirm = () => {
     if (selectedId) {
       handleAccept(selectedId);
-      setVisible(false);
+      setUiState((prev) => ({ ...prev, visible: false }));
     }
   };
 
@@ -452,7 +469,7 @@ const Home = () => {
       let res = await fetch(url);
       let json = await res.json();
 
-      // console.log("Mapbox API Response:", json);
+      processMapboxResponse(json);
 
       // Ensure routes exist
       if (!json.routes || json.routes.length === 0) {
@@ -465,33 +482,77 @@ const Home = () => {
       if (coordinates?.length) {
         // console.log("Route Coordinates:", coordinates);
         const routerFeature = makeRouterFeature([...coordinates]);
-        setRouteDirections(routerFeature);
+        setRouteDirections((prev) => ({ ...prev, routeThings: routerFeature }));
       } else {
         console.error("No coordinates found in route geometry!");
       }
-      setPitch(55);
-      if (zoom === 16) setZoom(18);
+
+      // To this
+      setCameraProps((prev) => ({
+        ...prev,
+        pitch: 55,
+        zoom: prev.zoom === 16 ? 18 : prev.zoom,
+      }));
     } catch (error) {
       console.error("Error fetching route:", error);
     }
   };
 
+  const processMapboxResponse = (response) => {
+    if (!response || !response.routes || response.routes.length === 0) {
+      return "Invalid response";
+    }
+
+    let distanceMeters = response.routes[0].distance; // Extract distance in meters
+    let durationSeconds = response.routes[0].duration; // Extract duration in seconds
+
+    // Convert meters to kilometers
+    let kilometers = (distanceMeters / 1000).toFixed(2);
+
+    // Convert seconds to minutes and seconds
+    let minutes = Math.floor(durationSeconds / 60);
+    let remainingSeconds = Math.round(durationSeconds % 60);
+
+    setRouteDirections((prev) => ({
+      ...prev,
+      routeTime: {
+        km: kilometers,
+        min: minutes,
+        sec: remainingSeconds,
+      },
+    }));
+  };
+
   const clear = async () => {
     try {
+      // Clear AsyncStorage items
       await AsyncStorage.removeItem("selectedData");
       await AsyncStorage.removeItem("requestAccepted");
       await AsyncStorage.removeItem("isRequested");
       await AsyncStorage.removeItem("socketData");
-      setSelectedData(null);
-      setRequestAccepted(false);
-      setIsRequested("");
+
       setSocketData([]);
+      setLocData(null);
+      setLoc(null);
+      setRole("");
+      setIsRequested("");
+      setSelectedId(null);
+      setSelectedData(null);
       setUpdatedLocation(null);
-      setRouteDirections(null);
-      setOrderCompleted("false");
-      console.log("=========================");
+      setRequestAccepted("");
+      setRouteDirections({
+        routeThings: null,
+        routeTime: {},
+      });
+      // setCameraProps({
+      //   zoom: 16,
+      //   bearing: 0,
+      //   pitch: 50,
+      // });
+
+      console.log("All states reset to default values");
     } catch (error) {
-      console.log(error);
+      console.log("Error clearing states:", error);
     }
   };
 
@@ -505,9 +566,17 @@ const Home = () => {
     }
   };
 
+  const toggleSidebar = () => {
+    setUiState((prev) => ({ ...prev, open: !prev.open }));
+  };
+
+  useEffect(() => {
+    console.log(compassHeading);
+  }, [compassHeading]);
+
   return (
     <Block flex center style={tw`w-full`}>
-      <Dialog.Container visible={visible}>
+      <Dialog.Container visible={uiState.visible}>
         <Dialog.Title>Confirm Acceptance</Dialog.Title>
         <Dialog.Description>
           Are you sure you want to accept this request?
@@ -515,7 +584,7 @@ const Home = () => {
         <Dialog.Button label="Cancel" onPress={handleCancel} />
         <Dialog.Button label="Accept" onPress={handleConfirm} />
       </Dialog.Container>
-      {isMapLoading && (
+      {uiState.isMapLoading && (
         <View
           style={tw`absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-white/80 z-1`}
         >
@@ -524,17 +593,18 @@ const Home = () => {
         </View>
       )}
       <TouchableOpacity
-        onPress={() => setOpen(!open)}
+        onPress={() => setUiState((prev) => ({ ...prev, open: !prev.open }))}
         style={tw`z-1000 absolute z-10 top-0 right-0 bg-violet-600 rounded-full p-5 m-2 py-4.5`}
       >
         <FontAwesome6 name="user-doctor" size={20} color="white" />
       </TouchableOpacity>
+
       <Animated.View style={[styles.sidebar, sidebarStyle, { zIndex: 1000 }]}>
         <View style={styles.bg}>
-          <GeminiChat setOpen={setOpen} open={open} />
+          <GeminiChat setOpen={toggleSidebar} open={uiState.open} />
         </View>
       </Animated.View>
-      {loc && locData && showMap && (
+      {loc && locData && uiState.showMap && (
         <MapView
           style={tw`h-full w-full`}
           styleURL="mapbox://styles/mapbox/navigation-day-v1" // Change to night mode (dark theme)
@@ -545,9 +615,11 @@ const Home = () => {
             alert("Something went wrong while loading the map!")
           }
           onRegionDidChange={(region) => {
-            setZoom(region.properties.zoom); // Save zoom
-            setBearing(region.properties.bearing); // Save rotation
-            setPitch(region.properties.pitch); // Save tilt
+            setCameraProps({
+              zoom: region.properties.zoom,
+              bearing: region.properties.bearing,
+              pitch: region.properties.pitch,
+            });
           }}
         >
           {/* 3D Custom Layer for Dynamic Effects */}
@@ -575,18 +647,16 @@ const Home = () => {
           />
           {/* Camera Settings */}
           <Camera
-            // centerCoordinate={loc}
-            // zoomLevel={16}
-            // animationMode="none"
-            // animationDuration={3000}
-            // pitch={60} // Gives the map a 3D angle
+            pitch={40}
             centerCoordinate={loc}
-            zoomLevel={zoom}
-            pitch={pitch}
-            heading={bearing} // Keeps rotation
-            animationMode="moveTo"
+            zoomLevel={cameraProps.zoom}
+            // pitch={cameraProps.pitch}
+            // heading={cameraProps.bearing}
+            heading={compassHeading}
+            animationMode="easeTo"
             animationDuration={2000}
           />
+
           {/* Marker for the Current Location */}
           <PointAnnotation id="marker" style={tw`h-10 w-10`} coordinate={loc}>
             {/* <View /> */}
@@ -603,8 +673,8 @@ const Home = () => {
               </View>
             )}
           </PointAnnotation>
-          {routeDirections && (
-            <ShapeSource id="line1" shape={routeDirections}>
+          {routeDirections?.routeThings && (
+            <ShapeSource id="line1" shape={routeDirections?.routeThings}>
               <LineLayer
                 id="routerLine01"
                 style={{
@@ -629,20 +699,21 @@ const Home = () => {
               </PointAnnotation>
             )}
 
-          {updatedLocation?.type === "location_update" && (
-            <PointAnnotation
-              id="driver_update"
-              style={tw`h-10 w-10`}
-              coordinate={[
-                updatedLocation?.longitude,
-                updatedLocation?.latitude,
-              ]}
-            >
-              <View>
-                <Image source={car} style={tw`h-10 w-10`} />
-              </View>
-            </PointAnnotation>
-          )}
+          {updatedLocation?.type === "location_update" &&
+            role === "customer" && (
+              <PointAnnotation
+                id="driver_update"
+                style={tw`h-10 w-10`}
+                coordinate={[
+                  updatedLocation?.longitude,
+                  updatedLocation?.latitude,
+                ]}
+              >
+                <View>
+                  <Image source={car} style={tw`h-10 w-10`} />
+                </View>
+              </PointAnnotation>
+            )}
 
           {selectedData?.data?.location?.lat &&
             selectedData?.data?.location?.lon && (
@@ -666,7 +737,7 @@ const Home = () => {
             )}
         </MapView>
       )}
-      {!showMap && (
+      {!uiState.showMap && (
         <View style={tw`flex h-full items-center justify-center`}>
           <Text
             style={tw`text-lg text-center text-red-400 font-medium tracking-widest`}
@@ -681,13 +752,13 @@ const Home = () => {
           ref={bottomSheetRef}
           snapPoints={snapPoints}
           enablePanDownToClose={false}
-          onChange={(e) => setSheetArrow(e)}
+          onChange={(e) => setUiState((prev) => ({ ...prev, sheetArrow: e }))}
           backgroundStyle={tw`bg-gray-100 rounded-t-3xl`}
           handleIndicatorStyle={tw`hidden`}
           handleComponent={() => (
             <View style={tw`items-center my-2`}>
               <Icon
-                name={sheetArrow === 0 ? "chevron-up" : "chevron-down"}
+                name={uiState.sheetArrow === 0 ? "chevron-up" : "chevron-down"}
                 size={30}
                 family="entypo"
                 style={tw`text-gray-500`}
@@ -724,7 +795,10 @@ const Home = () => {
                       ]}
                     >
                       <Text style={tw`text-sm text-gray-500`}>
-                        {parseAdditionalData(selectedData)}
+                        {parseAdditionalData(selectedData)}&nbsp;
+                        <Text style={tw`font-bold`}>
+                          ({routeDirections?.routeTime?.km} km)
+                        </Text>
                       </Text>
                     </View>
                   </View>
@@ -840,13 +914,12 @@ const Home = () => {
           enableDynamicSizing
           snapPoints={snapPoints}
           enablePanDownToClose={false}
-          onChange={(e) => setSheetArrow(e)}
           backgroundStyle={tw`bg-gray-100 rounded-t-3xl`}
           handleIndicatorStyle={tw`hidden`}
           handleComponent={() => (
             <View style={tw`items-center my-2`}>
               <Icon
-                name={sheetArrow === 0 ? "chevron-up" : "chevron-down"}
+                name={uiState.sheetArrow === 0 ? "chevron-up" : "chevron-down"}
                 size={30}
                 family="entypo"
                 style={tw`text-gray-500`}
@@ -880,7 +953,18 @@ const Home = () => {
                         }
                         style={tw`h-full w-20 rounded-l-lg`}
                       />
-                      <Text>{socketData?.driver?.name}</Text>
+                      <View style={tw`flex h-full justify-center`}>
+                        <Text style={tw`font-sm text-[0.8rem] text-gray-600`}>
+                          {socketData?.driver?.name}
+                        </Text>
+                        <Text
+                          style={tw`font-sm text-[0.8rem] text-gray-600 gap-2`}
+                        >
+                          Reaching in&nbsp;
+                          {routeDirections?.routeTime?.min}min&nbsp;
+                          {routeDirections?.routeTime?.sec}sec
+                        </Text>
+                      </View>
                     </View>
                   </View>
 
@@ -992,8 +1076,8 @@ const Home = () => {
                     </View>
                     <View style={tw`flex`}>
                       <Text style={tw`text-lg font-bold`}>Call 108</Text>
-                      <Text style={tw`text-sm text-gray-500`}>
-                        Call directly to emergency helpline
+                      <Text style={tw`text-sm text-gray-500 w-fit`}>
+                        Call to emergency helpline
                       </Text>
                     </View>
                   </View>

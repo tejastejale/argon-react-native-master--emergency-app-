@@ -342,7 +342,7 @@ class Header extends React.Component {
             />
           }
           right={
-            <View style={tw`flex flex-row`}>
+            <View onTouchStart={handleLogout} style={tw`flex flex-row`}>
               <Text
                 style={[
                   styles.title,
@@ -356,7 +356,6 @@ class Header extends React.Component {
                 name={"logout"}
                 family="MaterialIcons"
                 size={20}
-                onPress={handleLogout}
                 color={
                   iconColor ||
                   (white ? argonTheme.COLORS.WHITE : argonTheme.COLORS.ICON)

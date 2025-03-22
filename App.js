@@ -5,10 +5,10 @@ import * as Font from "expo-font";
 import { Asset } from "expo-asset";
 import { Block, GalioProvider } from "galio-framework";
 import { NavigationContainer } from "@react-navigation/native";
+// import "react-native-gesture-handler";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 // Before rendering any navigation stack
 import { enableScreens } from "react-native-screens";
-import * as Linking from "expo-linking";
 
 enableScreens();
 
@@ -50,13 +50,6 @@ export default function App() {
     level: ReanimatedLogLevel.warn,
     strict: false,
   });
-
-  useEffect(() => {
-    const handleLink = (e) => {
-      let data = Linking.parse(e.url);
-    };
-    Linking.addEventListener("url", handleLink);
-  }, []);
 
   useEffect(() => {
     async function prepare() {

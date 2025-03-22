@@ -8,6 +8,7 @@ import {
   Image,
   FlatList,
   ActivityIndicator,
+  BackHandler,
 } from "react-native";
 import { Button } from "galio-framework";
 import tw from "twrnc";
@@ -32,16 +33,16 @@ export default function DriverLogin({ navigation }) {
     { label: "Police", value: 1 },
   ]);
   const [Data, setData] = useState({
-    firstName: "tejas",
-    lastName: "tejale",
-    phoneNumber: "1234567895",
-    email: "tejas@scalen.io",
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
+    email: "",
     type: null, // 0:ambulance 1:police 2:fire
     license: null,
     passportPhoto: null,
     carPhoto: [],
-    password: "tejascode47",
-    confirmPassword: "tejascode47",
+    password: "",
+    confirmPassword: "",
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -49,6 +50,19 @@ export default function DriverLogin({ navigation }) {
   React.useEffect(() => {
     setData((prev) => ({ ...prev, type: value }));
   }, [value]);
+
+  React.useEffect(() => {
+    const backAction = async () => {
+      navigation.navigate("MainScreen");
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // Cleanup the listener on unmount
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -119,7 +133,6 @@ export default function DriverLogin({ navigation }) {
         }
         const res = await driverRegister(formData);
         setLoading(false);
-
         if (res.data?.code) {
           // handleClear();
           Dialog.show({
@@ -273,7 +286,6 @@ export default function DriverLogin({ navigation }) {
               <ArInput
                 style={tw`border p-2 rounded-lg`}
                 placeholder="Enter Email Number"
-                keyboardType="numeric"
                 value={Data.email}
                 onChangeText={(text) => setData({ ...Data, email: text })}
               />

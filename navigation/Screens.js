@@ -1,19 +1,23 @@
-import { Animated, Button, Dimensions, Easing, Text } from "react-native";
-// header for screens
+import {
+  ActivityIndicator,
+  Animated,
+  Button,
+  Dimensions,
+  Easing,
+  Text,
+  View,
+} from "react-native";
 import { Header, Icon } from "../components";
 import { argonTheme, tabs } from "../constants";
-
 import Articles from "../screens/Articles";
 import { Block } from "galio-framework";
-// drawer
 import CustomDrawerContent from "./Menu";
 import Elements from "../screens/Elements";
-// screens
 import Home from "../screens/Home";
 import Onboarding from "../screens/Onboarding";
 import Pro from "../screens/Pro";
 import Profile from "../screens/Profile";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Register from "../screens/Register";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createDrawerNavigator } from "@react-navigation/drawer";
@@ -22,90 +26,15 @@ import MainScreen from "../screens/Login/Main";
 import UserLogin from "../screens/Login/UserRegister";
 import DriverLogin from "../screens/Login/DriverRegister";
 import Login from "../screens/Login/Login";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import tw from "twrnc";
+import Loading from "../screens/Widget/Loading";
 
 const { width } = Dimensions.get("screen");
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
-
-// function ElementsStack(props) {
-//   return (
-//     <Stack.Navigator
-//       screenOptions={{
-//         mode: "card",
-//         headerShown: false,
-//       }}
-//     >
-//       <Stack.Screen
-//         name="Elements"
-//         component={Elements}
-//         options={{
-//           header: ({ navigation, scene }) => (
-//             <Header title="Elements" navigation={navigation} scene={scene} />
-//           ),
-//           cardStyle: { backgroundColor: "#F8F9FE" },
-//         }}
-//       />
-//       <Stack.Screen
-//         name="Pro"
-//         component={Pro}
-//         options={{
-//           header: ({ navigation, scene }) => (
-//             <Header
-//               title=""
-//               back
-//               white
-//               transparent
-//               navigation={navigation}
-//               scene={scene}
-//             />
-//           ),
-//           headerTransparent: true,
-//         }}
-//       />
-//     </Stack.Navigator>
-//   );
-// }
-
-// function ArticlesStack(props) {
-//   return (
-//     <Stack.Navigator
-//       screenOptions={{
-//         mode: "card",
-//         headerShown: "screen",
-//       }}
-//     >
-//       <Stack.Screen
-//         name="Articles"
-//         component={Articles}
-//         options={{
-//           header: ({ navigation, scene }) => (
-//             <Header title="Articles" navigation={navigation} scene={scene} />
-//           ),
-//           cardStyle: { backgroundColor: "#F8F9FE" },
-//         }}
-//       />
-//       <Stack.Screen
-//         name="Pro"
-//         component={Pro}
-//         options={{
-//           header: ({ navigation, scene }) => (
-//             <Header
-//               title=""
-//               back
-//               white
-//               transparent
-//               navigation={navigation}
-//               scene={scene}
-//             />
-//           ),
-//           headerTransparent: true,
-//         }}
-//       />
-//     </Stack.Navigator>
-//   );
-// }
 
 function ProfileStack(props) {
   return (
@@ -214,27 +143,7 @@ function LoginStack() {
   );
 }
 
-export default function OnboardingStack(props) {
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        mode: "card",
-        headerShown: false,
-      }}
-    >
-      {/* <Stack.Screen
-        name="Onboarding"
-        component={Onboarding}
-        option={{
-          headerTransparent: true,
-        }}
-      /> */}
-      <Stack.Screen name="App" component={AppStack} />
-    </Stack.Navigator>
-  );
-}
-
-function AppStack(props) {
+function AppStack({ initialRouteName }) {
   return (
     <Drawer.Navigator
       style={{ flex: 1 }}
@@ -244,7 +153,7 @@ function AppStack(props) {
         width: width * 0.8,
       }}
       screenOptions={({ route }) => ({
-        swipeEnabled: !["Login", "MainScreen", "Register"].includes(route.name), // Disable swipe gesture for these screens
+        swipeEnabled: !["Login", "MainScreen", "Register"].includes(route.name),
       })}
       drawerContentOptions={{
         activeTintcolor: "white",
@@ -266,7 +175,7 @@ function AppStack(props) {
           fontWeight: "normal",
         },
       }}
-      initialRouteName="Main"
+      initialRouteName={initialRouteName}
     >
       <Drawer.Screen
         name="Login"
@@ -289,27 +198,46 @@ function AppStack(props) {
           headerShown: true,
         }}
       />
-      {/* <Drawer.Screen
-        name="Account"
-        component={Register}
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Drawer.Screen
-        name="Elements"
-        component={ElementsStack}
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Drawer.Screen
-        name="Articles"
-        component={ArticlesStack}
-        options={{
-          headerShown: false,
-        }}
-      /> */}
     </Drawer.Navigator>
+  );
+}
+
+export default function OnboardingStack() {
+  const [initialRoute, setInitialRoute] = useState("Login");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        let obj = JSON.parse(token);
+        if (obj?.data?.token) {
+          setInitialRoute("Home");
+        }
+      } catch (error) {
+        console.log("Error checking token:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkToken();
+  }, []);
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        mode: "card",
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="App">
+        {(props) => <AppStack {...props} initialRouteName={initialRoute} />}
+      </Stack.Screen>
+    </Stack.Navigator>
   );
 }

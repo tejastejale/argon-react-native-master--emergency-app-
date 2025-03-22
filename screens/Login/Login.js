@@ -8,6 +8,7 @@ import {
   Dimensions,
   ActivityIndicator,
   TouchableOpacity,
+  BackHandler,
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import tw from "twrnc";
@@ -50,6 +51,19 @@ export default function Login({ navigation }) {
       }).start();
     }, 400);
   }, [animatedValue]);
+
+  useEffect(() => {
+    const backAction = async () => {
+      navigation.navigate("MainScreen");
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // Cleanup the listener on unmount
+  }, []);
 
   const isValid = () => !(formData.password && formData.phone);
 
